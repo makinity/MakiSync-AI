@@ -87,8 +87,9 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
           src="/assets/maki.png"
           alt="Mark Vencent Juntilla — AI Video Creator"
           style={{
-            width:      'min(520px, 72vw)',
-            height:     'auto',
+            height:     'min(880px, 86vh)',
+            width:      'auto',
+            maxWidth:   '92vw',
             display:    'block',
             objectFit:  'contain',
             objectPosition: 'bottom center',
@@ -167,51 +168,17 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
         </motion.div>
       </motion.div>
 
-      {/* ── Top-center: availability badge ──────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: -12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        style={{
-          position:       'absolute',
-          top:            '7rem',
-          left:           '50%',
-          transform:      'translateX(-50%)',
-          zIndex:          5,
-          display:        'inline-flex',
-          alignItems:     'center',
-          gap:             10,
-          padding:        '7px 18px',
-          borderRadius:   99,
-          background:     'var(--admin-card)',
-          border:         '1px solid var(--admin-border-strong)',
-          fontSize:       '0.73rem',
-          fontWeight:      600,
-          color:          'var(--admin-text-secondary)',
-          boxShadow:      '0 4px 24px rgba(59,130,246,0.08)',
-          whiteSpace:     'nowrap',
-          backdropFilter: 'blur(12px)',
-        }}
-      >
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', flexShrink: 0, boxShadow: '0 0 6px #34d399' }} />
-        <span>Available for Q3/Q4 AI Video Campaigns</span>
-        <span style={{ color: 'var(--admin-border)', margin: '0 2px' }}>|</span>
-        <span style={{ color: 'var(--admin-accent)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-          <i className="bi bi-stars" style={{ fontSize: '0.8rem' }} /> Google Flow AI Pro
-        </span>
-      </motion.div>
-
-      {/* ── Watch Showreel button — bottom center above scroll ───────────────── */}
+      {/* ── Watch Showreel button — bottom right ─────────────────────────────── */}
       <motion.button
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.65, duration: 0.5 }}
         onClick={onOpenShowreel}
+        className="hero-watch-btn"
         style={{
           position:   'absolute',
-          bottom:     '5.5rem',
-          left:       '50%',
-          transform:  'translateX(-50%)',
+          bottom:     '2.5rem',
+          right:      '2.5rem',
           zIndex:      5,
           padding:    '9px 22px',
           borderRadius: 99,
@@ -227,18 +194,20 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
           gap:         8,
           backdropFilter: 'blur(12px)',
           boxShadow:  '0 4px 20px rgba(0,0,0,0.08)',
-          transition: 'border-color 0.2s, box-shadow 0.2s',
+          transition: 'all 0.2s ease',
           whiteSpace: 'nowrap',
         }}
         onMouseEnter={e => {
           const el = e.currentTarget as HTMLElement;
           el.style.borderColor = 'var(--admin-accent)';
           el.style.boxShadow   = '0 4px 24px rgba(59,130,246,0.18)';
+          el.style.transform   = 'translateY(-2px)';
         }}
         onMouseLeave={e => {
           const el = e.currentTarget as HTMLElement;
           el.style.borderColor = 'var(--admin-border-strong)';
           el.style.boxShadow   = '0 4px 20px rgba(0,0,0,0.08)';
+          el.style.transform   = 'translateY(0)';
         }}
       >
         <i className="bi bi-play-circle-fill" style={{ color: 'var(--admin-accent)', fontSize: '1rem' }} />
@@ -269,7 +238,12 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
         }
 
         @media (max-width: 640px) {
-          #hero .hero-badge { font-size: 0.62rem !important; padding: 6px 12px !important; }
+          .hero-watch-btn {
+            bottom: 4.8rem !important;
+            left: 50% !important;
+            right: auto !important;
+            transform: translateX(-50%) !important;
+          }
         }
       `}</style>
     </section>
