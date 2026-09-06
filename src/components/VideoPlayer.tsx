@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize, Sparkles } from 'lucide-react';
+import { getVideoSource } from '@/lib/videoUtils';
 
 interface VideoPlayerProps {
   src: string;
@@ -17,6 +18,8 @@ export default function VideoPlayer({ src, poster, onTimeUpdate, seekTime }: Vid
   const [progress, setProgress] = useState(0);
   const [currentTimeStr, setCurrentTimeStr] = useState('0:00');
   const [durationStr, setDurationStr] = useState('0:00');
+
+  const videoSource = getVideoSource(src);
 
   useEffect(() => {
     if (seekTime !== null && seekTime !== undefined && videoRef.current) {
@@ -75,11 +78,26 @@ export default function VideoPlayer({ src, poster, onTimeUpdate, seekTime }: Vid
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
+  // If source is an embedded video (Google Drive preview, YouTube, Vimeo)
+  if (videoSource.isIframe) {
+    return (
+      <div className="relative aspect-video rounded-2xl overflow-hidden glass-panel border-slate-700/80 group shadow-2xl bg-black">
+        <iframe
+          src={videoSource.embedUrl}
+          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+          allowFullScreen
+          className="w-full h-full border-none"
+          title="Commercial Video Presentation"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="relative aspect-video rounded-2xl overflow-hidden glass-panel border-slate-700/80 group shadow-2xl bg-black">
       <video
         ref={videoRef}
-        src={src}
+        src={videoSource.directUrl || src}
         poster={poster}
         onTimeUpdate={handleTimeUpdate}
         onClick={togglePlay}

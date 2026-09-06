@@ -18,14 +18,14 @@ import { Project, SiteSettings } from '@/types/database';
 
 export default function HomePage() {
   const [showreelOpen, setShowreelOpen] = useState(false);
-  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(INITIAL_SITE_SETTINGS);
 
   useEffect(() => {
     async function loadData() {
       const p = await getPublishedProjects();
       const s = await getSiteSettings();
-      if (p && p.length > 0) setProjects(p);
+      if (p) setProjects(p);
       if (s) setSiteSettings(s);
     }
     loadData();

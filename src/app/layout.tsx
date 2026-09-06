@@ -10,13 +10,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Mark Vencent Juntilla | AI Video Creator & Creative Technologist (MakiSync)',
-  description: 'Director-led AI Video Advertising, commercial conceptualization, shot architecture, and creative technology.',
-  keywords: ['AI Video Creator', 'AI Commercial Director', 'AI Advertising', 'Google Flow Video', 'Creative Technologist', 'MakiSync'],
+  title: 'Mark Vencent Juntilla | AI ADS UGC Creator & Commercial Director (MakiSync)',
+  description: 'AI ADS UGC Creator, Commercial Video Director, high-converting video advertising, and generative AI creative execution.',
+  keywords: ['AI ADS UGC Creator', 'AI Video Creator', 'AI Commercial Director', 'AI Advertising', 'UGC Creator', 'Google Flow Video', 'MakiSync'],
   authors: [{ name: 'Mark Vencent L. Juntilla' }],
   openGraph: {
-    title: 'Mark Vencent Juntilla | AI Video Creator Portfolio',
-    description: 'Director-led AI Video Advertising & Creative Direction.',
+    title: 'Mark Vencent Juntilla | AI ADS UGC Creator Portfolio',
+    description: 'AI ADS UGC Creator & Director-led Commercial Video Advertising.',
     type: 'website',
   },
 };

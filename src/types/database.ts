@@ -1,5 +1,3 @@
-﻿export type ProjectCategory = 'Tech' | 'Beverage' | 'Fashion' | 'Automotive' | 'Social Ad';
-
 export type ProjectStatus = 'draft' | 'published' | 'archived';
 
 export interface ShotBreakdownItem {
@@ -14,26 +12,25 @@ export interface Project {
   id: string;
   title: string;
   slug: string;
-  client_spec: string;
-  category: ProjectCategory;
+  client_spec?: string;
   description: string;
   thumbnail_url: string;
   hero_video_url: string;
-  final_video_url: string;
-  duration: string;
-  format: string; // '16:9' or '9:16'
-  role: string;
-  brief: string;
-  advertising_objective: string;
-  creative_direction: string;
-  story_narrative: string;
-  production_process: string;
-  shot_breakdown: ShotBreakdownItem[];
+  final_video_url?: string;
+  duration?: string;
+  format?: string; // '16:9' or '9:16'
+  role?: string;
+  brief?: string;
+  advertising_objective?: string;
+  creative_direction?: string;
+  story_narrative?: string;
+  production_process?: string;
+  shot_breakdown?: ShotBreakdownItem[];
   tools_used: string[];
-  gallery_urls: string[];
-  is_featured: boolean;
+  gallery_urls?: string[];
+  is_featured?: boolean;
   status: ProjectStatus;
-  display_order: number;
+  display_order?: number;
   created_at?: string;
   updated_at?: string;
 }

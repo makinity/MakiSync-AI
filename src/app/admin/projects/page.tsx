@@ -4,16 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/layouts/AppLayout';
 import ConfirmModal from '@/components/ConfirmModal';
-import { Project, ProjectCategory } from '@/types/database';
+import { Project } from '@/types/database';
 import { getAllProjects, deleteProject } from '@/lib/supabase';
-
-const CATEGORIES: (ProjectCategory | 'All')[] = ['All', 'Tech', 'Beverage', 'Fashion', 'Automotive', 'Social Ad'];
 
 export default function AdminProjectsPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<ProjectCategory | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Delete Confirm Modal state
@@ -32,10 +29,9 @@ export default function AdminProjectsPage() {
   }
 
   const filteredProjects = projects.filter((p) => {
-    const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
-    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          p.client_spec.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           (p.client_spec || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+           (p.description || '').toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   function handleCreateNew() {
@@ -125,31 +121,6 @@ export default function AdminProjectsPage() {
           </button>
         </div>
 
-        {/* Category Filters Row */}
-        <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: 10,
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                fontFamily: 'inherit',
-                transition: 'all 0.15s ease',
-                background: activeCategory === cat ? 'var(--admin-accent)' : 'var(--admin-card)',
-                color: activeCategory === cat ? '#ffffff' : 'var(--admin-text-secondary)',
-                border: `1px solid ${activeCategory === cat ? 'var(--admin-accent)' : 'var(--admin-border)'}`
-              }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
         {/* Projects Table Card */}
         <div style={{
           borderRadius: 16,
@@ -180,8 +151,7 @@ export default function AdminProjectsPage() {
                   }}>
                     <th style={{ padding: '1rem 1.25rem' }}>Project</th>
                     <th style={{ padding: '1rem 1rem' }}>Client & Role</th>
-                    <th style={{ padding: '1rem 1rem' }}>Category</th>
-                    <th style={{ padding: '1rem 1rem' }}>Format</th>
+                    <th style={{ padding: '1rem 1rem' }}>Format & Duration</th>
                     <th style={{ padding: '1rem 1rem' }}>Status</th>
                     <th style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>Actions</th>
                   </tr>
@@ -222,30 +192,31 @@ export default function AdminProjectsPage() {
                         </div>
                       </td>
 
-                      {/* Client & Role */}
+                      {/* Client / Tools */}
                       <td style={{ padding: '1rem 1rem' }}>
-                        <div style={{ fontWeight: 700, color: 'var(--admin-text-primary)' }}>{p.client_spec}</div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted)', marginTop: '0.15rem' }}>{p.role}</div>
-                      </td>
-
-                      {/* Category */}
-                      <td style={{ padding: '1rem 1rem' }}>
-                        <span style={{
-                          padding: '0.25rem 0.65rem',
-                          borderRadius: 6,
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          background: 'rgba(59,130,246,0.12)',
-                          color: '#60a5fa',
-                          border: '1px solid rgba(59,130,246,0.25)'
-                        }}>
-                          {p.category}
-                        </span>
+                        <div style={{ fontWeight: 700, color: 'var(--admin-text-primary)' }}>
+                          {p.client_spec || (p.tools_used && p.tools_used[0]) || 'AI Video'}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted)', marginTop: '0.15rem' }}>
+                          {p.role || (p.tools_used && p.tools_used.slice(0, 2).join(', ')) || 'AI Video'}
+                        </div>
                       </td>
 
                       {/* Format */}
                       <td style={{ padding: '1rem 1rem', color: 'var(--admin-text-secondary)' }}>
-                        {p.format} ({p.duration})
+                        <span style={{
+                          padding: '0.2rem 0.55rem',
+                          borderRadius: 6,
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          background: 'rgba(59,130,246,0.1)',
+                          color: 'var(--admin-accent)',
+                          border: '1px solid rgba(59,130,246,0.25)',
+                          marginRight: 6
+                        }}>
+                          {p.format}
+                        </span>
+                        {p.duration}
                       </td>
 
                       {/* Status */}

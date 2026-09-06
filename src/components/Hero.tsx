@@ -127,8 +127,8 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
           color:      'var(--admin-text-primary)',
           lineHeight:  1.45,
         }}>
-          AI Video Creator&nbsp;·<br />
-          Commercial Director&nbsp;·&nbsp;Google Flow
+          AI ADS UGC Creator&nbsp;·<br />
+          Commercial Video Director
         </div>
       </motion.div>
 

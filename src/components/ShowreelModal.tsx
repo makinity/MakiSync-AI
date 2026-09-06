@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getVideoSource } from '@/lib/videoUtils';
 
 interface ShowreelModalProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
   const [progress, setProgress] = useState(0);
   const [currentTimeStr, setCurrentTimeStr] = useState('0:00');
   const [durationStr, setDurationStr] = useState('0:00');
+
+  const videoSource = getVideoSource(videoUrl);
 
   // Close on Escape key press
   useEffect(() => {
@@ -212,118 +215,130 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
                 overflow: 'hidden',
               }}
             >
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                autoPlay
-                onTimeUpdate={handleTimeUpdate}
-                onClick={togglePlay}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  cursor: 'pointer',
-                }}
-              />
-
-              {/* Large Center Play/Pause Overlay Button */}
-              {!isPlaying && (
-                <button
-                  onClick={togglePlay}
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'rgba(0, 0, 0, 0.45)',
-                    backdropFilter: 'blur(4px)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 68,
-                      height: 68,
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                      border: '2px solid rgba(255, 255, 255, 0.3)',
-                      boxShadow: '0 0 30px rgba(59,130,246,0.6)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ffffff',
-                    }}
-                  >
-                    <i className="bi bi-play-fill" style={{ fontSize: '2.2rem', marginLeft: 4 }} />
-                  </div>
-                </button>
-              )}
-
-              {/* Custom Bottom Control Bar */}
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  padding: '16px 20px 12px',
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 8,
-                  opacity: 1,
-                  transition: 'opacity 0.2s ease',
-                }}
-              >
-                {/* Timeline Slider */}
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={progress || 0}
-                  onChange={handleSeek}
-                  style={{
-                    width: '100%',
-                    height: 4,
-                    accentColor: '#3b82f6',
-                    cursor: 'pointer',
-                  }}
+              {videoSource.isIframe ? (
+                <iframe
+                  src={videoSource.embedUrl}
+                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                  title="Director Cut Showreel"
                 />
+              ) : (
+                <>
+                  <video
+                    ref={videoRef}
+                    src={videoSource.directUrl || videoUrl}
+                    autoPlay
+                    onTimeUpdate={handleTimeUpdate}
+                    onClick={togglePlay}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      cursor: 'pointer',
+                    }}
+                  />
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#f8fafc', fontSize: '0.78rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  {/* Large Center Play/Pause Overlay Button */}
+                  {!isPlaying && (
                     <button
                       onClick={togglePlay}
-                      style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(0, 0, 0, 0.45)',
+                        backdropFilter: 'blur(4px)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
                     >
-                      <i className={`bi bi-${isPlaying ? 'pause-fill' : 'play-fill'}`} style={{ fontSize: '1.2rem' }} />
+                      <div
+                        style={{
+                          width: 68,
+                          height: 68,
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                          border: '2px solid rgba(255, 255, 255, 0.3)',
+                          boxShadow: '0 0 30px rgba(59,130,246,0.6)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#ffffff',
+                        }}
+                      >
+                        <i className="bi bi-play-fill" style={{ fontSize: '2.2rem', marginLeft: 4 }} />
+                      </div>
                     </button>
+                  )}
 
-                    <button
-                      onClick={toggleMute}
-                      style={{ background: 'none', border: 'none', color: isMuted ? '#ef4444' : '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                    >
-                      <i className={`bi bi-${isMuted ? 'volume-mute-fill' : 'volume-up-fill'}`} style={{ fontSize: '1.1rem' }} />
-                    </button>
+                  {/* Custom Bottom Control Bar */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      padding: '16px 20px 12px',
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                      opacity: 1,
+                      transition: 'opacity 0.2s ease',
+                    }}
+                  >
+                    {/* Timeline Slider */}
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={progress || 0}
+                      onChange={handleSeek}
+                      style={{
+                        width: '100%',
+                        height: 4,
+                        accentColor: '#3b82f6',
+                        cursor: 'pointer',
+                      }}
+                    />
 
-                    <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#94a3b8' }}>
-                      {currentTimeStr} / {durationStr}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#f8fafc', fontSize: '0.78rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <button
+                          onClick={togglePlay}
+                          style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        >
+                          <i className={`bi bi-${isPlaying ? 'pause-fill' : 'play-fill'}`} style={{ fontSize: '1.2rem' }} />
+                        </button>
+
+                        <button
+                          onClick={toggleMute}
+                          style={{ background: 'none', border: 'none', color: isMuted ? '#ef4444' : '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        >
+                          <i className={`bi bi-${isMuted ? 'volume-mute-fill' : 'volume-up-fill'}`} style={{ fontSize: '1.1rem' }} />
+                        </button>
+
+                        <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#94a3b8' }}>
+                          {currentTimeStr} / {durationStr}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <button
+                          onClick={toggleFullscreen}
+                          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                          title="Fullscreen"
+                        >
+                          <i className="bi bi-arrows-fullscreen" style={{ fontSize: '0.9rem' }} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <button
-                      onClick={toggleFullscreen}
-                      style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                      title="Fullscreen"
-                    >
-                      <i className="bi bi-arrows-fullscreen" style={{ fontSize: '0.9rem' }} />
-                    </button>
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
             </div>
 
             {/* Modal Footer Bar */}

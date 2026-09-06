@@ -8,7 +8,6 @@ import {
   AreaChart, Area,
   BarChart, Bar,
   PieChart, Pie, Cell,
-  RadarChart, Radar, PolarGrid, PolarAngleAxis,
   ResponsiveContainer,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
@@ -20,14 +19,6 @@ const AMBER    = '#f59e0b';
 const PURPLE   = '#8b5cf6';
 const ROSE     = '#f43f5e';
 const CYAN     = '#06b6d4';
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Tech:       ACCENT,
-  Beverage:   EMERALD,
-  Fashion:    PURPLE,
-  Automotive: AMBER,
-  'Social Ad': ROSE,
-};
 
 const STATUS_COLORS: Record<string, string> = {
   published: EMERALD,
@@ -70,15 +61,12 @@ function buildMonthlyData(projects: Project[]) {
   return result;
 }
 
-function buildCategoryData(projects: Project[]) {
-  const map: Record<string, number> = {};
-  projects.forEach(p => { map[p.category] = (map[p.category] || 0) + 1; });
-  return Object.entries(map).map(([name, value]) => ({ name, value }));
-}
-
 function buildFormatData(projects: Project[]) {
   const map: Record<string, number> = {};
-  projects.forEach(p => { map[p.format] = (map[p.format] || 0) + 1; });
+  projects.forEach(p => { 
+    const fmt = p.format || '16:9';
+    map[fmt] = (map[fmt] || 0) + 1; 
+  });
   return Object.entries(map).map(([name, value]) => ({ name, value }));
 }
 
@@ -99,15 +87,6 @@ function buildInquiryStatusData(inquiries: LeadInquiry[]) {
   const map: Record<string, number> = { unread: 0, read: 0, archived: 0 };
   inquiries.forEach(i => { map[i.status] = (map[i.status] || 0) + 1; });
   return Object.entries(map).map(([name, value]) => ({ name, value }));
-}
-
-function buildRadarData(projects: Project[]) {
-  const categories = ['Tech', 'Beverage', 'Fashion', 'Automotive', 'Social Ad'];
-  return categories.map(cat => ({
-    category: cat,
-    count: projects.filter(p => p.category === cat).length,
-    fullMark: Math.max(projects.length, 5),
-  }));
 }
 
 // ─── Stat card ─────────────────────────────────────────────────────────────────
@@ -182,20 +161,6 @@ function ChartCard({ title, subtitle, children, span = 1 }: {
   );
 }
 
-// ─── Custom Pie label ──────────────────────────────────────────────────────────
-const RADIAN = Math.PI / 180;
-function renderCustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, name, percent }: any) {
-  if (percent < 0.05) return null;
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-  return (
-    <text x={x} y={y} fill="#fff" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700}>
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
-}
-
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function AdminDashboardPage() {
   const [projects, setProjects]     = useState<Project[]>([]);
@@ -222,11 +187,9 @@ export default function AdminDashboardPage() {
 
   // ── Chart data ───────────────────────────────────────────────────────────────
   const monthlyData     = buildMonthlyData(projects);
-  const categoryData    = buildCategoryData(projects);
   const formatData      = buildFormatData(projects);
   const toolsData       = buildToolsData(projects);
   const inquiryData     = buildInquiryStatusData(inquiries);
-  const radarData       = buildRadarData(projects);
 
   const gridStyle = {
     display: 'grid',
@@ -259,11 +222,11 @@ export default function AdminDashboardPage() {
           <StatCard label="Formats"            value={formatData.length} icon="bi-aspect-ratio-fill" color={AMBER} sub="16:9 · 9:16 aspect ratios" />
         </div>
 
-        {/* ── Row 2: Area chart (wide) + Pie (narrow) ────────────────────────── */}
-        <div style={{ ...gridStyle, gridTemplateColumns: '2fr 1fr' }}>
+        {/* ── Row 2: Area chart (wide) + Tool Stack bar (narrow) ──────────────── */}
+        <div style={{ ...gridStyle, gridTemplateColumns: '1.6fr 1fr' }}>
 
-          <ChartCard title="Monthly Project Activity" subtitle="Projects published vs. drafts over the last 9 months">
-            <ResponsiveContainer width="100%" height={240}>
+          <ChartCard title="Monthly Commercial Ad Activity" subtitle="Projects published vs. drafts over the last 9 months">
+            <ResponsiveContainer width="100%" height={250}>
               <AreaChart data={monthlyData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradPublished" x1="0" y1="0" x2="0" y2="1">
@@ -286,37 +249,8 @@ export default function AdminDashboardPage() {
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Category Distribution" subtitle="Projects by industry vertical">
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%" cy="50%"
-                  outerRadius={90}
-                  dataKey="value"
-                  labelLine={false}
-                  label={renderCustomLabel}
-                >
-                  {categoryData.map((entry) => (
-                    <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || ACCENT} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [`${v} project${Number(v) !== 1 ? 's' : ''}`, n]} />
-                <Legend
-                  iconType="circle"
-                  iconSize={8}
-                  wrapperStyle={{ fontSize: '0.72rem', color: '#94a3b8' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-
-        {/* ── Row 3: Tools bar + Radar + Inquiry donut ────────────────────────── */}
-        <div style={{ ...gridStyle, gridTemplateColumns: '2fr 1fr 1fr' }}>
-
           <ChartCard title="AI Tool Stack Usage" subtitle="How many projects use each tool">
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={250}>
               <BarChart data={toolsData} layout="vertical" margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
                 <XAxis type="number" allowDecimals={false} tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -330,15 +264,42 @@ export default function AdminDashboardPage() {
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
+        </div>
 
-          <ChartCard title="Category Radar" subtitle="Portfolio coverage by vertical">
+        {/* ── Row 3: Views Area + Formats + Inquiries ─────────────────────────── */}
+        <div style={{ ...gridStyle, gridTemplateColumns: '1.6fr 1fr 1fr' }}>
+
+          <ChartCard title="Estimated Portfolio Views" subtitle="Synthetic engagement trend across 9 months">
             <ResponsiveContainer width="100%" height={220}>
-              <RadarChart data={radarData} margin={{ top: 8, right: 16, left: 16, bottom: 8 }}>
-                <PolarGrid stroke="#1e293b" />
-                <PolarAngleAxis dataKey="category" tick={{ fill: '#94a3b8', fontSize: 10 }} />
-                <Radar name="Projects" dataKey="count" stroke={ACCENT} fill={ACCENT} fillOpacity={0.25} strokeWidth={2} dot={{ r: 3, fill: ACCENT }} />
-                <Tooltip contentStyle={tooltipStyle} />
-              </RadarChart>
+              <AreaChart data={monthlyData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradViews" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor={CYAN} stopOpacity={0.4} />
+                    <stop offset="95%" stopColor={CYAN} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="month" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} views`, 'Portfolio Views']} />
+                <Area type="monotone" dataKey="views" name="Views" stroke={CYAN} strokeWidth={2} fill="url(#gradViews)" dot={{ r: 3, fill: CYAN }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          <ChartCard title="Video Formats" subtitle="Aspect ratio split">
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={formatData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} project${Number(v) !== 1 ? 's' : ''}`, 'Format']} />
+                <Bar dataKey="value" name="Projects" radius={[6, 6, 0, 0]}>
+                  {formatData.map((_, i) => (
+                    <Cell key={i} fill={[ACCENT, PURPLE][i % 2]} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
@@ -365,53 +326,10 @@ export default function AdminDashboardPage() {
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.72rem', color: '#94a3b8' }} />
               </PieChart>
             </ResponsiveContainer>
-            {/* Centre label */}
-            <div style={{ textAlign: 'center', marginTop: '-0.5rem' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--admin-text-primary)' }}>{inquiries.length}</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)' }}>Total Leads</div>
-            </div>
           </ChartCard>
         </div>
 
-        {/* ── Row 4: Portfolio views area + Format bar ─────────────────────────── */}
-        <div style={{ ...gridStyle, gridTemplateColumns: '3fr 1fr' }}>
-
-          <ChartCard title="Estimated Portfolio Views" subtitle="Synthetic engagement trend across 9 months">
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={monthlyData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gradViews" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={CYAN} stopOpacity={0.4} />
-                    <stop offset="95%" stopColor={CYAN} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="month" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} views`, 'Portfolio Views']} />
-                <Area type="monotone" dataKey="views" name="Views" stroke={CYAN} strokeWidth={2} fill="url(#gradViews)" dot={{ r: 3, fill: CYAN }} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartCard>
-
-          <ChartCard title="Video Formats" subtitle="Aspect ratio split">
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={formatData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} project${Number(v) !== 1 ? 's' : ''}`, 'Format']} />
-                <Bar dataKey="value" name="Projects" radius={[6, 6, 0, 0]}>
-                  {formatData.map((_, i) => (
-                    <Cell key={i} fill={[ACCENT, PURPLE][i % 2]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-
-        {/* ── Row 5: Recent projects table ─────────────────────────────────────── */}
+        {/* ── Row 4: Recent projects table ─────────────────────────────────────── */}
         <div style={{
           borderRadius: 16,
           background: 'var(--admin-card)',
@@ -433,8 +351,7 @@ export default function AdminDashboardPage() {
                 <tr style={{ borderBottom: '1px solid var(--admin-border)', background: 'rgba(0,0,0,0.15)', fontSize: '0.7rem', fontWeight: 800, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   <th style={{ padding: '0.85rem 1.25rem', textAlign: 'left' }}>Project</th>
                   <th style={{ padding: '0.85rem 1rem', textAlign: 'left' }}>Client</th>
-                  <th style={{ padding: '0.85rem 1rem', textAlign: 'left' }}>Category</th>
-                  <th style={{ padding: '0.85rem 1rem', textAlign: 'left' }}>Format</th>
+                  <th style={{ padding: '0.85rem 1rem', textAlign: 'left' }}>Format & Duration</th>
                   <th style={{ padding: '0.85rem 1rem', textAlign: 'left' }}>Status</th>
                 </tr>
               </thead>
@@ -450,13 +367,24 @@ export default function AdminDashboardPage() {
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: '0.85rem 1rem', color: 'var(--admin-text-secondary)' }}>{p.client_spec}</td>
-                    <td style={{ padding: '0.85rem 1rem' }}>
-                      <span style={{ padding: '0.2rem 0.55rem', borderRadius: 6, fontSize: '0.68rem', fontWeight: 700, background: `${CATEGORY_COLORS[p.category] || ACCENT}1a`, color: CATEGORY_COLORS[p.category] || ACCENT, border: `1px solid ${CATEGORY_COLORS[p.category] || ACCENT}33` }}>
-                        {p.category}
-                      </span>
+                    <td style={{ padding: '0.85rem 1rem', color: 'var(--admin-text-secondary)' }}>
+                      {p.client_spec || (p.tools_used && p.tools_used[0]) || 'AI Video'}
                     </td>
-                    <td style={{ padding: '0.85rem 1rem', color: 'var(--admin-text-secondary)', fontFamily: 'monospace', fontSize: '0.78rem' }}>{p.format}</td>
+                    <td style={{ padding: '0.85rem 1rem', color: 'var(--admin-text-secondary)' }}>
+                      <span style={{
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: 6,
+                        fontSize: '0.68rem',
+                        fontWeight: 600,
+                        background: 'rgba(59,130,246,0.1)',
+                        color: 'var(--admin-accent)',
+                        border: '1px solid rgba(59,130,246,0.25)',
+                        marginRight: 6
+                      }}>
+                        {p.format}
+                      </span>
+                      {p.duration}
+                    </td>
                     <td style={{ padding: '0.85rem 1rem' }}>
                       <span style={{ padding: '0.2rem 0.55rem', borderRadius: 6, fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', background: `${STATUS_COLORS[p.status]}1a`, color: STATUS_COLORS[p.status], border: `1px solid ${STATUS_COLORS[p.status]}33` }}>
                         {p.status}
@@ -466,7 +394,7 @@ export default function AdminDashboardPage() {
                 ))}
                 {projects.length === 0 && (
                   <tr>
-                    <td colSpan={5} style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--admin-text-muted)', fontSize: '0.82rem' }}>
+                    <td colSpan={4} style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--admin-text-muted)', fontSize: '0.82rem' }}>
                       No projects in the slate yet.
                     </td>
                   </tr>

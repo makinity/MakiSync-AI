@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { uploadMediaFile } from '@/lib/supabase';
+import { formatMediaUrlForStorage, getVideoSource } from '@/lib/videoUtils';
 
 interface MediaDropzoneProps {
   label: string;
@@ -9,25 +10,6 @@ interface MediaDropzoneProps {
   onChange: (url: string) => void;
   acceptType?: 'video' | 'image' | 'any';
   placeholder?: string;
-}
-
-// Convert Google Drive share link to direct video stream URL
-export function convertGoogleDriveUrl(url: string): string {
-  if (!url) return '';
-  
-  // Pattern 1: https://drive.google.com/file/d/FILE_ID/view...
-  const matchFile = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (matchFile && matchFile[1]) {
-    return `https://lh3.googleusercontent.com/d/${matchFile[1]}`;
-  }
-
-  // Pattern 2: https://drive.google.com/open?id=FILE_ID or uc?id=FILE_ID
-  const matchId = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (matchId && matchId[1]) {
-    return `https://lh3.googleusercontent.com/d/${matchId[1]}`;
-  }
-
-  return url;
 }
 
 export default function MediaDropzone({
@@ -42,8 +24,8 @@ export default function MediaDropzone({
   const [activeTab, setActiveTab] = useState<'upload' | 'url'>('upload');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const displayUrl = convertGoogleDriveUrl(value);
-  const isVideo = acceptType === 'video' || (displayUrl && (displayUrl.endsWith('.mp4') || displayUrl.endsWith('.webm') || displayUrl.includes('googleusercontent.com/d/')));
+  const videoSource = getVideoSource(value);
+  const isVideo = acceptType === 'video' || videoSource.isIframe || (value && (value.endsWith('.mp4') || value.endsWith('.webm') || value.includes('video')));
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -78,8 +60,8 @@ export default function MediaDropzone({
   };
 
   const handleUrlChange = (newUrl: string) => {
-    const converted = convertGoogleDriveUrl(newUrl);
-    onChange(converted);
+    const formatted = formatMediaUrlForStorage(newUrl, acceptType);
+    onChange(formatted);
   };
 
   return (
@@ -164,17 +146,23 @@ export default function MediaDropzone({
           ) : value ? (
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
               {/* Media Preview */}
-              <div style={{ width: '100%', maxHeight: 120, borderRadius: 8, overflow: 'hidden', background: '#000', display: 'flex', justifyContent: 'center' }}>
-                {isVideo ? (
-                  <video src={displayUrl} controls style={{ maxHeight: 120, width: '100%', objectFit: 'contain' }} />
+              <div style={{ width: '100%', maxHeight: 140, borderRadius: 8, overflow: 'hidden', background: '#000', display: 'flex', justifyContent: 'center' }}>
+                {videoSource.isIframe ? (
+                  <iframe
+                    src={videoSource.embedUrl}
+                    style={{ width: '100%', height: 140, border: 'none' }}
+                    title="Preview"
+                  />
+                ) : isVideo ? (
+                  <video src={videoSource.directUrl || value} controls style={{ maxHeight: 140, width: '100%', objectFit: 'contain' }} />
                 ) : (
-                  <img src={displayUrl} alt="Preview" style={{ maxHeight: 120, width: '100%', objectFit: 'cover' }} />
+                  <img src={value} alt="Preview" style={{ maxHeight: 140, width: '100%', objectFit: 'cover' }} />
                 )}
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <i className="bi bi-check-circle-fill" /> File Attached
+                  <i className="bi bi-check-circle-fill" /> Attached ({videoSource.type.toUpperCase()})
                 </span>
                 <button
                   type="button"
@@ -212,7 +200,7 @@ export default function MediaDropzone({
           )}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <input
             type="text"
             value={value}
@@ -230,8 +218,23 @@ export default function MediaDropzone({
               fontFamily: 'inherit',
             }}
           />
+          {value && (
+            <div style={{ width: '100%', maxHeight: 130, borderRadius: 8, overflow: 'hidden', background: '#000', display: 'flex', justifyContent: 'center' }}>
+              {videoSource.isIframe ? (
+                <iframe
+                  src={videoSource.embedUrl}
+                  style={{ width: '100%', height: 130, border: 'none' }}
+                  title="URL Preview"
+                />
+              ) : isVideo ? (
+                <video src={videoSource.directUrl || value} controls style={{ maxHeight: 130, width: '100%', objectFit: 'contain' }} />
+              ) : (
+                <img src={value} alt="Preview" style={{ maxHeight: 130, width: '100%', objectFit: 'cover' }} />
+              )}
+            </div>
+          )}
           <div style={{ fontSize: '0.68rem', color: 'var(--admin-text-muted)' }}>
-            💡 Supports direct MP4/WebM URLs and Google Drive share links (auto-converted to stream format).
+            💡 Supports Google Drive share links, YouTube, Vimeo, and direct MP4/WebM URLs.
           </div>
         </div>
       )}

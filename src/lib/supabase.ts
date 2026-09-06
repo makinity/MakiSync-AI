@@ -32,7 +32,7 @@ export async function getPublishedProjects(): Promise<Project[]> {
         .eq('status', 'published')
         .order('display_order', { ascending: true });
         
-      if (!error && data && data.length > 0) return data as Project[];
+      if (!error && data) return data as Project[];
     } catch (e) {
       console.error('Supabase fetch published projects failed:', e);
     }
@@ -43,11 +43,11 @@ export async function getPublishedProjects(): Promise<Project[]> {
     if (stored) {
       try {
         const parsed: Project[] = JSON.parse(stored);
-        return parsed.filter(p => p.status === 'published').sort((a, b) => a.display_order - b.display_order);
+        return parsed.filter(p => p.status === 'published').sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
       } catch (e) {}
     }
   }
-  return INITIAL_PROJECTS.filter(p => p.status === 'published');
+  return [];
 }
 
 export async function getAllProjects(): Promise<Project[]> {
@@ -58,7 +58,7 @@ export async function getAllProjects(): Promise<Project[]> {
         .select('*')
         .order('display_order', { ascending: true });
         
-      if (!error && data && data.length > 0) return data as Project[];
+      if (!error && data) return data as Project[];
     } catch (e) {
       console.error('Supabase fetch all projects failed:', e);
     }
@@ -72,7 +72,7 @@ export async function getAllProjects(): Promise<Project[]> {
       } catch (e) {}
     }
   }
-  return INITIAL_PROJECTS;
+  return [];
 }
 
 export async function getProjectBySlug(slug: string): Promise<Project | null> {

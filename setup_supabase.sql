@@ -1,12 +1,6 @@
-﻿-- Supabase SQL Schema & Initial Seed Data for AI Video Creator Portfolio (MakiSync)
+-- Supabase SQL Schema & Initial Seed Data for AI Video Creator Portfolio (MakiSync)
 
 -- 1. Create Enum Types (if not already existing)
-DO $$ BEGIN
-    CREATE TYPE project_category AS ENUM ('Tech', 'Beverage', 'Fashion', 'Automotive', 'Social Ad');
-EXCEPTION
-    WHEN duplicate_object THEN null;
-END $$;
-
 DO $$ BEGIN
     CREATE TYPE project_status AS ENUM ('draft', 'published', 'archived');
 EXCEPTION
@@ -19,7 +13,6 @@ CREATE TABLE IF NOT EXISTS projects (
   title VARCHAR(255) NOT NULL,
   slug VARCHAR(255) UNIQUE NOT NULL,
   client_spec VARCHAR(255) NOT NULL,
-  category project_category NOT NULL DEFAULT 'Tech',
   description TEXT NOT NULL,
   thumbnail_url TEXT NOT NULL,
   hero_video_url TEXT NOT NULL,
@@ -112,7 +105,7 @@ ON CONFLICT (username) DO NOTHING;
 
 -- 10. Seed Initial Commercial Projects Slate
 INSERT INTO projects (
-  title, slug, client_spec, category, description, thumbnail_url, hero_video_url, final_video_url,
+  title, slug, client_spec, description, thumbnail_url, hero_video_url, final_video_url,
   duration, format, role, brief, advertising_objective, creative_direction, story_narrative,
   production_process, shot_breakdown, tools_used, gallery_urls, is_featured, status, display_order
 ) VALUES
@@ -120,7 +113,6 @@ INSERT INTO projects (
   'Aether Vision Pro — Next-Gen Spatial AI Glasses',
   'aether-vision-pro-spatial-ai-glasses',
   'Aether Tech Labs',
-  'Tech',
   'Cinematic product launch reveal combining macro lens choreography, liquid metal simulation, volumetric neon raytracing, and high-energy electronic sound design.',
   'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?auto=format&fit=crop&w=1200&q=80',
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
@@ -144,7 +136,6 @@ INSERT INTO projects (
   'Elixir Noir — Botanical Tonic Commercial',
   'elixir-noir-botanical-tonic',
   'Elixir Beverage Co.',
-  'Beverage',
   'High-speed liquid macro photography, ice crystal splash choreography, glowing botanical ember accents, and ambient acoustic soundscapes.',
   'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=1200&q=80',
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
@@ -168,7 +159,6 @@ INSERT INTO projects (
   'Aura Atelier — Cyber-Silk Fashion Runway',
   'aura-atelier-cyber-silk-runway',
   'Aura Atelier Paris',
-  'Fashion',
   'High-fashion editorial runway, iridescent fabric physics, brutalist architectural lighting, and avant-garde ambient music.',
   'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=80',
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
@@ -192,7 +182,6 @@ INSERT INTO projects (
   'Veloce Horizon — Electric Supercar Concept',
   'veloce-horizon-electric-supercar',
   'Veloce Motors',
-  'Automotive',
   'Dynamic vehicle tracking, high-speed camera choreography, atmospheric weather transitions, and cinematic storytelling.',
   'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1200&q=80',
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
@@ -216,7 +205,6 @@ INSERT INTO projects (
   'Lumina Skin — Radiance Serum (Direct Response)',
   'lumina-skin-radiance-serum',
   'Lumina Beauty',
-  'Social Ad',
   'Short-form vertical video ad optimized for TikTok & IG Reels with a 3-second visual hook, fast pacing, kinetic text overlays, and high-converting CTA.',
   'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=1200&q=80',
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
@@ -239,7 +227,6 @@ INSERT INTO projects (
 ON CONFLICT (slug) DO UPDATE SET
   title = EXCLUDED.title,
   client_spec = EXCLUDED.client_spec,
-  category = EXCLUDED.category,
   description = EXCLUDED.description,
   thumbnail_url = EXCLUDED.thumbnail_url,
   hero_video_url = EXCLUDED.hero_video_url,
