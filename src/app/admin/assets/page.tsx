@@ -1,9 +1,10 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import AppLayout from '@/layouts/AppLayout';
 import FormModal from '@/components/FormModal';
 import ConfirmModal from '@/components/ConfirmModal';
+import MediaDropzone from '@/components/admin/MediaDropzone';
 import { MediaAsset } from '@/types/database';
 import { getAssets, saveAsset, deleteAsset } from '@/lib/supabase';
 
@@ -264,16 +265,12 @@ export default function AdminAssetsPage() {
               />
             </div>
 
-            <div>
-              <label style={lblStyle}>File URL *</label>
-              <input
-                type="text"
-                required
-                value={editingAsset.file_url || ''}
-                onChange={(e) => setEditingAsset({ ...editingAsset, file_url: e.target.value })}
-                style={inpStyle}
-              />
-            </div>
+            <MediaDropzone
+              label="Asset File"
+              value={editingAsset.file_url || ''}
+              onChange={(url) => setEditingAsset({ ...editingAsset, file_url: url })}
+              placeholder="Drag video/image file or paste URL / Google Drive link..."
+            />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>

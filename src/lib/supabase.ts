@@ -1,4 +1,4 @@
-﻿import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { Project, SiteSettings, LeadInquiry, MediaAsset } from '@/types/database';
 import { INITIAL_PROJECTS, INITIAL_SITE_SETTINGS } from './mockData';
 
@@ -339,3 +339,42 @@ export async function deleteAsset(id: string): Promise<void> {
     localStorage.setItem(STORAGE_KEY_ASSETS, JSON.stringify(updated));
   }
 }
+
+// ==========================================
+// 5. SUPABASE STORAGE FILE UPLOAD
+// ==========================================
+
+export async function uploadMediaFile(file: File, bucketName = 'portfolio-media'): Promise<{ url: string; error?: string }> {
+  if (supabase) {
+    try {
+      const fileExt = file.name.split('.').pop() || 'bin';
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const filePath = `uploads/${fileName}`;
+
+      const { data, error } = await supabase.storage.from(bucketName).upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
+
+      if (!error && data) {
+        const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+        if (publicUrlData?.publicUrl) {
+          return { url: publicUrlData.publicUrl };
+        }
+      } else if (error) {
+        console.warn('Supabase Storage upload warning:', error.message);
+      }
+    } catch (err: any) {
+      console.warn('Supabase Storage upload exception:', err.message);
+    }
+  }
+
+  // Fallback to local Object URL for instant browser playback/preview
+  if (typeof window !== 'undefined') {
+    const objectUrl = URL.createObjectURL(file);
+    return { url: objectUrl };
+  }
+
+  return { url: '', error: 'Failed to process media file' };
+}
+

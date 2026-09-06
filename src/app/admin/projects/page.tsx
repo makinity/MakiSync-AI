@@ -1,24 +1,20 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import AppLayout from '@/layouts/AppLayout';
-import FormModal from '@/components/FormModal';
 import ConfirmModal from '@/components/ConfirmModal';
 import { Project, ProjectCategory } from '@/types/database';
-import { getAllProjects, saveProject, deleteProject } from '@/lib/supabase';
+import { getAllProjects, deleteProject } from '@/lib/supabase';
 
 const CATEGORIES: (ProjectCategory | 'All')[] = ['All', 'Tech', 'Beverage', 'Fashion', 'Automotive', 'Social Ad'];
 
 export default function AdminProjectsPage() {
+  const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<ProjectCategory | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Modal states
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<Partial<Project> | null>(null);
-  const [saving, setSaving] = useState(false);
 
   // Delete Confirm Modal state
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
@@ -43,41 +39,11 @@ export default function AdminProjectsPage() {
   });
 
   function handleCreateNew() {
-    const newId = typeof crypto !== 'undefined' && crypto.randomUUID 
-      ? crypto.randomUUID() 
-      : '00000000-0000-0000-0000-' + Date.now().toString().padStart(12, '0');
-
-    setEditingProject({
-      id: newId,
-      title: '',
-      slug: '',
-      client_spec: '',
-      category: 'Tech',
-      description: '',
-      thumbnail_url: '',
-      hero_video_url: '',
-      final_video_url: '',
-      duration: '0:30',
-      format: '16:9',
-      role: 'AI Creative Director & Technologist',
-      brief: '',
-      advertising_objective: '',
-      creative_direction: '',
-      story_narrative: '',
-      production_process: '',
-      shot_breakdown: [],
-      tools_used: ['Google Flow', 'Midjourney v6', 'Premiere Pro'],
-      gallery_urls: [],
-      is_featured: true,
-      status: 'published',
-      display_order: projects.length + 1,
-    });
-    setModalOpen(true);
+    router.push('/admin/projects/new');
   }
 
   function handleEdit(project: Project) {
-    setEditingProject({ ...project });
-    setModalOpen(true);
+    router.push(`/admin/projects/${project.id}/edit`);
   }
 
   async function handleConfirmDelete() {
@@ -88,69 +54,6 @@ export default function AdminProjectsPage() {
     setDeleteTarget(null);
     await loadProjects();
   }
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editingProject || !editingProject.title) return;
-    setSaving(true);
-
-    const generatedId = editingProject.id || (typeof crypto !== 'undefined' && crypto.randomUUID 
-      ? crypto.randomUUID() 
-      : '00000000-0000-0000-0000-' + Date.now().toString().padStart(12, '0'));
-
-    const projectToSave: Project = {
-      id: generatedId,
-      title: editingProject.title || 'Untitled Project',
-      slug: editingProject.slug || editingProject.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      client_spec: editingProject.client_spec || 'Client Spec',
-      category: editingProject.category || 'Tech',
-      description: editingProject.description || '',
-      thumbnail_url: editingProject.thumbnail_url || 'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?auto=format&fit=crop&w=1200&q=80',
-      hero_video_url: editingProject.hero_video_url || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      final_video_url: editingProject.final_video_url || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      duration: editingProject.duration || '0:30',
-      format: editingProject.format || '16:9',
-      role: editingProject.role || 'AI Creative Director',
-      brief: editingProject.brief || '',
-      advertising_objective: editingProject.advertising_objective || '',
-      creative_direction: editingProject.creative_direction || '',
-      story_narrative: editingProject.story_narrative || '',
-      production_process: editingProject.production_process || '',
-      shot_breakdown: editingProject.shot_breakdown || [],
-      tools_used: editingProject.tools_used || ['Google Flow', 'Premiere Pro'],
-      gallery_urls: editingProject.gallery_urls || [],
-      is_featured: editingProject.is_featured ?? true,
-      status: editingProject.status || 'published',
-      display_order: editingProject.display_order || 1,
-      created_at: editingProject.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    await saveProject(projectToSave);
-    setSaving(false);
-    setModalOpen(false);
-    await loadProjects();
-  }
-
-  const inpStyle = {
-    width: '100%',
-    padding: '0.65rem 0.9rem',
-    borderRadius: '10px',
-    background: 'var(--admin-bg-secondary)',
-    border: '1px solid var(--admin-border)',
-    color: 'var(--admin-text-primary)',
-    fontSize: '0.82rem',
-    outline: 'none',
-    fontFamily: 'inherit',
-  };
-
-  const lblStyle = {
-    display: 'block',
-    fontSize: '0.75rem',
-    fontWeight: 700,
-    color: 'var(--admin-text-secondary)',
-    marginBottom: '0.35rem',
-  };
 
   return (
     <AppLayout title="Projects Slate CMS" description="Manage commercial AI video ad projects slate">
@@ -413,139 +316,6 @@ export default function AdminProjectsPage() {
         </div>
 
       </div>
-
-      {/* Edit / Create FormModal */}
-      {modalOpen && editingProject && (
-        <FormModal
-          title={editingProject.title ? `Edit ${editingProject.title}` : 'New Commercial Project'}
-          onClose={() => setModalOpen(false)}
-          onSubmit={handleSave}
-          loading={saving}
-          submitLabel={editingProject.title ? 'Update Project' : 'Create Project'}
-          maxWidth={680}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
-                <label style={lblStyle}>Project Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={editingProject.title || ''}
-                  onChange={(e) => setEditingProject({ ...editingProject, title: e.target.value })}
-                  style={inpStyle}
-                />
-              </div>
-
-              <div>
-                <label style={lblStyle}>URL Slug *</label>
-                <input
-                  type="text"
-                  required
-                  value={editingProject.slug || ''}
-                  onChange={(e) => setEditingProject({ ...editingProject, slug: e.target.value })}
-                  style={inpStyle}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
-                <label style={lblStyle}>Client Spec *</label>
-                <input
-                  type="text"
-                  required
-                  value={editingProject.client_spec || ''}
-                  onChange={(e) => setEditingProject({ ...editingProject, client_spec: e.target.value })}
-                  style={inpStyle}
-                />
-              </div>
-
-              <div>
-                <label style={lblStyle}>Category</label>
-                <select
-                  value={editingProject.category || 'Tech'}
-                  onChange={(e) => setEditingProject({ ...editingProject, category: e.target.value as ProjectCategory })}
-                  style={inpStyle}
-                >
-                  <option value="Tech">Tech</option>
-                  <option value="Beverage">Beverage</option>
-                  <option value="Fashion">Fashion</option>
-                  <option value="Automotive">Automotive</option>
-                  <option value="Social Ad">Social Ad</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-              <div>
-                <label style={lblStyle}>Format</label>
-                <input
-                  type="text"
-                  value={editingProject.format || '16:9'}
-                  onChange={(e) => setEditingProject({ ...editingProject, format: e.target.value })}
-                  style={inpStyle}
-                />
-              </div>
-
-              <div>
-                <label style={lblStyle}>Duration</label>
-                <input
-                  type="text"
-                  value={editingProject.duration || '0:30'}
-                  onChange={(e) => setEditingProject({ ...editingProject, duration: e.target.value })}
-                  style={inpStyle}
-                />
-              </div>
-
-              <div>
-                <label style={lblStyle}>Status</label>
-                <select
-                  value={editingProject.status || 'published'}
-                  onChange={(e) => setEditingProject({ ...editingProject, status: e.target.value as any })}
-                  style={inpStyle}
-                >
-                  <option value="published">Published</option>
-                  <option value="draft">Draft</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label style={lblStyle}>Thumbnail Cover Image URL</label>
-              <input
-                type="text"
-                value={editingProject.thumbnail_url || ''}
-                onChange={(e) => setEditingProject({ ...editingProject, thumbnail_url: e.target.value })}
-                style={inpStyle}
-              />
-            </div>
-
-            <div>
-              <label style={lblStyle}>Hero Video URL</label>
-              <input
-                type="text"
-                value={editingProject.hero_video_url || ''}
-                onChange={(e) => setEditingProject({ ...editingProject, hero_video_url: e.target.value })}
-                style={inpStyle}
-              />
-            </div>
-
-            <div>
-              <label style={lblStyle}>Client Brief</label>
-              <textarea
-                rows={3}
-                value={editingProject.brief || ''}
-                onChange={(e) => setEditingProject({ ...editingProject, brief: e.target.value })}
-                style={{ ...inpStyle, resize: 'vertical' }}
-              />
-            </div>
-
-          </div>
-        </FormModal>
-      )}
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
