@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
@@ -11,6 +11,7 @@ import AboutSection from '@/components/AboutSection';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 import DotCanvas from '@/components/DotCanvas';
+import MakiBot from '@/components/MakiBot';
 import { getPublishedProjects, getSiteSettings } from '@/lib/supabase';
 import { INITIAL_PROJECTS, INITIAL_SITE_SETTINGS } from '@/lib/mockData';
 import { Project, SiteSettings } from '@/types/database';
@@ -56,6 +57,8 @@ export default function HomePage() {
           videoUrl={siteSettings.showreel.video_url}
           title={siteSettings.showreel.title}
         />
+
+        <MakiBot />
       </main>
     </>
   );
