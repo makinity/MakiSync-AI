@@ -57,20 +57,6 @@ export default function AboutSection() {
           >
             {/* Avatar */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{
-                width: 64, height: 64, borderRadius: 16, flexShrink: 0,
-                background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                padding: 2, overflow: 'hidden',
-              }}>
-                <img
-                  src="/assets/maki.png"
-                  alt="Mark Vencent Juntilla"
-                  style={{
-                    width: '100%', height: '100%', borderRadius: 14,
-                    objectFit: 'cover', display: 'block',
-                  }}
-                />
-              </div>
               <div>
                 <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--admin-text-primary)', marginBottom: 3 }}>
                   Mark Vencent Juntilla

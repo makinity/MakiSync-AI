@@ -216,13 +216,26 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
               }}
             >
               {videoSource.isIframe ? (
-                <iframe
-                  src={videoSource.embedUrl}
-                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                  allowFullScreen
-                  style={{ width: '100%', height: '100%', border: 'none' }}
-                  title="Director Cut Showreel"
-                />
+                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                  <iframe
+                    src={videoSource.embedUrl}
+                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                    allowFullScreen
+                    style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+                    title="Director Cut Showreel"
+                  />
+                  {/* Block the Google Drive pop-out button with logo */}
+                  <div style={{
+                    position: 'absolute', top: 0, right: 0,
+                    width: 80, height: 56,
+                    background: 'rgba(0,0,0,0.75)',
+                    zIndex: 10,
+                    pointerEvents: 'all',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <img src="/logo.png" alt="Logo" style={{ height: 28, width: 'auto', objectFit: 'contain', opacity: 0.9 }} />
+                  </div>
+                </div>
               ) : (
                 <>
                   <video

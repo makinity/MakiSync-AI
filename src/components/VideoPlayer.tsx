@@ -89,6 +89,17 @@ export default function VideoPlayer({ src, poster, onTimeUpdate, seekTime }: Vid
           className="w-full h-full border-none"
           title="Commercial Video Presentation"
         />
+        {/* Block the Google Drive pop-out / open button with logo */}
+        <div style={{
+          position: 'absolute', top: 0, right: 0,
+          width: 80, height: 56,
+          background: 'rgba(0,0,0,0.75)',
+          zIndex: 10,
+          pointerEvents: 'all',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <img src="/logo.png" alt="Logo" style={{ height: 28, width: 'auto', objectFit: 'contain', opacity: 0.9 }} />
+        </div>
       </div>
     );
   }

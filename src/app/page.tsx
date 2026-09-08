@@ -6,7 +6,6 @@ import Hero from '@/components/Hero';
 import ShowreelModal from '@/components/ShowreelModal';
 import SelectedWork from '@/components/SelectedWork';
 import CreativeApproach from '@/components/CreativeApproach';
-import CapabilitiesMatrix from '@/components/CapabilitiesMatrix';
 import AboutSection from '@/components/AboutSection';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
@@ -42,8 +41,6 @@ export default function HomePage() {
         <SelectedWork projects={projects} />
 
         <CreativeApproach />
-
-        <CapabilitiesMatrix />
 
         <AboutSection />
 
