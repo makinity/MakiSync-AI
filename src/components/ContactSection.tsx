@@ -1,27 +1,17 @@
-﻿'use client';
+'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 
 export default function ContactSection() {
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-  };
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '10px 14px',
-    borderRadius: 10,
-    background: 'var(--admin-bg-primary)',
-    border: '1px solid var(--admin-border)',
-    color: 'var(--admin-text-primary)',
-    fontSize: '0.82rem',
-    outline: 'none',
-    fontFamily: 'inherit',
-    transition: 'border-color 0.2s',
-  };
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://assets.calendly.com/assets/external/widget.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   return (
     <section id="contact" style={{ padding: '6rem 2rem', background: 'var(--admin-bg-secondary)', position: 'relative' }}>
@@ -51,7 +41,7 @@ export default function ContactSection() {
                 </span>
               </h2>
               <p style={{ fontSize: '0.9rem', color: 'var(--admin-text-muted)', lineHeight: 1.7, margin: 0 }}>
-                Whether you need a commercial AI video advertisement, a product launch campaign, or creative direction, let&apos;s connect.
+                Whether you need a commercial AI video advertisement, a product launch campaign, or creative direction, let&apos;s connect. Pick a time below and let&apos;s talk.
               </p>
             </div>
 
@@ -110,93 +100,19 @@ export default function ContactSection() {
             </div>
           </div>
 
-          {/* Right: form */}
+          {/* Right: Calendly embed */}
           <div style={{
             background: 'var(--admin-card)',
             border: '1px solid var(--admin-border)',
-            borderRadius: 20, padding: '2rem',
+            borderRadius: 20,
+            overflow: 'hidden',
+            minHeight: 660,
           }}>
-            {submitted ? (
-              <div style={{ padding: '3rem 0', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-                <div style={{
-                  width: 56, height: 56, borderRadius: '50%',
-                  background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.3)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <i className="bi bi-check-lg" style={{ fontSize: '1.5rem', color: '#34d399' }} />
-                </div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--admin-text-primary)', margin: 0 }}>Message Received!</h3>
-                <p style={{ fontSize: '0.82rem', color: 'var(--admin-text-muted)', lineHeight: 1.6, maxWidth: 280, margin: 0 }}>
-                  Thank you for reaching out. I&apos;ll review your project brief and get back to you within 24 hours.
-                </p>
-                <button
-                  onClick={() => setSubmitted(false)}
-                  style={{ fontSize: '0.78rem', color: 'var(--admin-accent)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}
-                >
-                  Send another inquiry
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }} className="form-row">
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--admin-text-secondary)', marginBottom: 5 }}>Your Name</label>
-                    <input required type="text" placeholder="e.g. Sarah Jenkins" style={inputStyle}
-                      onFocus={e => { (e.target as HTMLElement).style.borderColor = 'var(--admin-accent)'; }}
-                      onBlur={e => { (e.target as HTMLElement).style.borderColor = 'var(--admin-border)'; }} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--admin-text-secondary)', marginBottom: 5 }}>Email Address</label>
-                    <input required type="email" placeholder="e.g. sarah@brand.com" style={inputStyle}
-                      onFocus={e => { (e.target as HTMLElement).style.borderColor = 'var(--admin-accent)'; }}
-                      onBlur={e => { (e.target as HTMLElement).style.borderColor = 'var(--admin-border)'; }} />
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--admin-text-secondary)', marginBottom: 5 }}>Project Category</label>
-                  <select style={{ ...inputStyle }}
-                    onFocus={e => { (e.target as HTMLElement).style.borderColor = 'var(--admin-accent)'; }}
-                    onBlur={e => { (e.target as HTMLElement).style.borderColor = 'var(--admin-border)'; }}
-                  >
-                    <option>Tech &amp; Electronics Launch</option>
-                    <option>Beverage &amp; FMCG Commercial</option>
-                    <option>Fashion &amp; Luxury Lookbook</option>
-                    <option>Automotive Widescreen Ad</option>
-                    <option>Social Media Direct Response (9:16)</option>
-                    <option>Other Custom AI Creative Brief</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--admin-text-secondary)', marginBottom: 5 }}>Project Brief &amp; Details</label>
-                  <textarea
-                    required rows={4}
-                    placeholder="Tell me about your product, campaign objectives, timeline, and desired video format..."
-                    style={{ ...inputStyle, resize: 'vertical', minHeight: 100 }}
-                    onFocus={e => { (e.target as HTMLElement).style.borderColor = 'var(--admin-accent)'; }}
-                    onBlur={e => { (e.target as HTMLElement).style.borderColor = 'var(--admin-border)'; }}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  style={{
-                    width: '100%', padding: '13px 20px', borderRadius: 10,
-                    background: 'var(--admin-accent)', color: '#fff',
-                    fontSize: '0.88rem', fontWeight: 700,
-                    border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    boxShadow: '0 6px 24px rgba(59,130,246,0.25)', transition: 'opacity 0.2s',
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.88'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
-                >
-                  <i className="bi bi-send-fill" style={{ fontSize: '0.82rem' }} />
-                  Submit Project Brief
-                </button>
-              </form>
-            )}
+            <div
+              className="calendly-inline-widget"
+              data-url="https://calendly.com/juntillakingmaki/30min?hide_event_type_details=1&hide_gdpr_banner=1"
+              style={{ minWidth: 320, height: 660 }}
+            />
           </div>
 
         </div>
@@ -204,7 +120,6 @@ export default function ContactSection() {
       <style>{`
         @media (max-width: 768px) {
           .contact-grid { grid-template-columns: 1fr !important; }
-          .form-row { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </section>
