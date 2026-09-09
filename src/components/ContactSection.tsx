@@ -32,23 +32,44 @@ export default function ContactSection() {
                 color: 'var(--admin-text-primary)', letterSpacing: '-0.03em',
                 margin: '0 0 16px', lineHeight: 1.1,
               }}>
-                Have an AI Video{' '}
+                Book a Free{' '}
                 <span style={{
                   background: 'var(--heading-gradient)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                 }}>
-                  Project in Mind?
+                  30-Min Call
                 </span>
               </h2>
-              <p style={{ fontSize: '0.9rem', color: 'var(--admin-text-muted)', lineHeight: 1.7, margin: 0 }}>
-                Whether you need a commercial AI video advertisement, a product launch campaign, or creative direction, let&apos;s connect. Pick a time below and let&apos;s talk.
+              <p style={{ fontSize: '0.9rem', color: 'var(--admin-text-muted)', lineHeight: 1.7, margin: '0 0 20px' }}>
+                Got an AI video project in mind? Let&apos;s talk about your vision, timeline, and what we can build together. No pressure — just a quick discovery call.
               </p>
+
+              {/* CTA bullet points */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[
+                  { icon: 'bi-camera-video-fill', text: 'AI video ads, product launches & campaigns' },
+                  { icon: 'bi-clock-fill', text: '30 minutes — free, no commitment' },
+                  { icon: 'bi-lightning-charge-fill', text: 'Fast turnaround, cinematic quality' },
+                ].map(item => (
+                  <div key={item.text} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                      background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'var(--admin-accent)', fontSize: 12,
+                    }}>
+                      <i className={`bi ${item.icon}`} />
+                    </div>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--admin-text-secondary)' }}>{item.text}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Contact items */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { icon: 'bi-envelope-fill', label: 'Direct Email', value: 'markvencentjuntilla@gmail.com', href: 'mailto:markvencentjuntilla@gmail.com' },
+                { icon: 'bi-envelope-fill', label: 'Direct Email', value: 'juntillakingmaki@gmail.com', href: 'mailto:juntillakingmaki@gmail.com' },
                 { icon: 'bi-globe', label: 'Brand Hub', value: 'MakiSync Digital Solutions', href: 'https://maki-sync.vercel.app/' },
               ].map(item => (
                 <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
