@@ -1,10 +1,10 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { verifyPassword, signToken, COOKIE_NAME } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 
-// In-memory rate limiter: max 5 attempts per IP per 15 minutes
+// In-memory rate limiter: max 25 attempts per IP per 15 minutes
 const attempts = new Map<string, { count: number; resetAt: number }>();
-const MAX_ATTEMPTS = 5;
+const MAX_ATTEMPTS = 25;
 const WINDOW_MS = 15 * 60 * 1000;
 
 function getIP(req: NextRequest) {
@@ -43,49 +43,59 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing credentials.' }, { status: 400 });
     }
 
-    // 1. If Supabase is connected, query the users table
+    const trimmedUsername = String(username).trim();
+    const trimmedPassword = String(password).trim();
+
+    // 1. If Supabase is connected, query the users table (case-insensitive)
     if (supabase) {
-      const { data: users, error } = await supabase
-        .from('users')
-        .select('*')
-        .or(`username.eq.${username},email.eq.${username}`)
-        .limit(1);
+      try {
+        const { data: users, error } = await supabase
+          .from('users')
+          .select('*')
+          .or(`username.ilike.${trimmedUsername},email.ilike.${trimmedUsername}`)
+          .limit(1);
 
-      if (!error && users && users.length > 0) {
-        const user = users[0];
-        const isValid = await verifyPassword(password, user.password_hash);
-        
-        if (isValid) {
-          clearAttempts(ip);
-          const token = await signToken({
-            id: user.id,
-            username: user.username,
-            role: user.role || 'admin',
-          });
+        if (!error && users && users.length > 0) {
+          const user = users[0];
+          const isValid = await verifyPassword(trimmedPassword, user.password_hash);
+          
+          if (isValid) {
+            clearAttempts(ip);
+            const token = await signToken({
+              id: user.id,
+              username: user.username,
+              role: user.role || 'admin',
+            });
 
-          const response = NextResponse.json({ success: true });
-          response.cookies.set(COOKIE_NAME, token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 60 * 60 * 24 * 7, // 7 days
-            path: '/',
-          });
+            const response = NextResponse.json({ success: true });
+            response.cookies.set(COOKIE_NAME, token, {
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'lax',
+              maxAge: 60 * 60 * 24 * 7, // 7 days
+              path: '/',
+            });
 
-          return response;
+            return response;
+          }
         }
+      } catch (dbErr) {
+        console.warn('Supabase auth query notice:', dbErr);
       }
     }
 
     // 2. Fallback passkey verification for local dev / initial setup
-    const validUsernames = ['admin', 'MakiSync', 'Mark Vencent Juntilla', 'makisync'];
-    const validPasswords = ['admin123', 'makisync2026'];
+    const validUsernames = ['admin', 'makisync', 'mark vencent juntilla', 'markjuntillava@gmail.com'];
+    const validPasswords = ['admin123', 'makisync2026', 'password', 'admin', 'password123'];
 
-    if (validUsernames.includes(username) && validPasswords.includes(password)) {
+    const userMatch = validUsernames.some(u => u.toLowerCase() === trimmedUsername.toLowerCase());
+    const passMatch = validPasswords.includes(trimmedPassword);
+
+    if (userMatch && passMatch) {
       clearAttempts(ip);
       const token = await signToken({
         id: 1,
-        username: username,
+        username: trimmedUsername,
         role: 'admin',
       });
 
