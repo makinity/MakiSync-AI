@@ -258,14 +258,14 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
                 </div>
 
                 {/* Card Content */}
-                <div style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ padding: 'clamp(1rem, 4vw, 1.5rem)', flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div>
                     {project.client_spec && (
                       <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--admin-accent)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                         {project.client_spec}
                       </p>
                     )}
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--admin-text-primary)', margin: 0, lineHeight: 1.35 }}>
+                    <h3 style={{ fontSize: 'clamp(0.95rem, 2.5vw, 1.05rem)', fontWeight: 700, color: 'var(--admin-text-primary)', margin: 0, lineHeight: 1.35 }}>
                       {project.title}
                     </h3>
                     <p style={{
@@ -279,6 +279,7 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
                   <div style={{
                     paddingTop: 12, borderTop: '1px solid var(--admin-border)',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    gap: 8, flexWrap: 'wrap',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       {(project.tools_used || []).slice(0, 2).map((t, idx) => (
@@ -287,13 +288,13 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
                           background: 'var(--admin-bg-secondary)',
                           color: 'var(--admin-text-muted)',
                           border: '1px solid var(--admin-border)',
-                          fontWeight: 500,
+                          fontWeight: 500, whiteSpace: 'nowrap',
                         }}>
                           {t}
                         </span>
                       ))}
                       {(project.tools_used || []).length > 2 && (
-                        <span style={{ fontSize: '0.65rem', color: 'var(--admin-text-muted)' }}>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--admin-text-muted)', whiteSpace: 'nowrap' }}>
                           +{(project.tools_used || []).length - 2}
                         </span>
                       )}
@@ -307,7 +308,7 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
                         fontSize: '0.78rem', fontWeight: 700,
                         color: 'var(--admin-accent)', textDecoration: 'none',
                         display: 'inline-flex', alignItems: 'center', gap: 4,
-                        transition: 'color 0.2s',
+                        transition: 'color 0.2s', whiteSpace: 'nowrap',
                         position: 'relative', zIndex: 20,
                       }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--admin-text-primary)'; }}

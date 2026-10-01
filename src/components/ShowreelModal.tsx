@@ -83,7 +83,18 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
   return (
     <AnimatePresence>
       {isOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', overflow: 'hidden' }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 'clamp(0.5rem, 3vw, 1.5rem)',
+            overflowY: 'auto',
+          }}
+        >
           {/* Backdrop blur overlay */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -93,7 +104,7 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'var(--hero-overlay, rgba(10, 15, 26, 0.85))',
+              background: 'var(--hero-overlay, rgba(10, 15, 26, 0.88))',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
             }}
@@ -107,60 +118,77 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: 'relative',
-              width: 'min(960px, 92vw)',
+              width: 'min(960px, 96vw)',
               maxWidth: '100%',
+              maxHeight: '94vh',
               background: 'var(--admin-card)',
               border: '1px solid var(--admin-border-strong)',
-              borderRadius: 24,
+              borderRadius: 'clamp(12px, 3vw, 24px)',
               boxShadow: 'var(--admin-shadow), 0 0 40px rgba(59,130,246,0.15)',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
               zIndex: 10,
+              margin: 'auto',
             }}
           >
             {/* Modal Header */}
             <div
               style={{
-                padding: '14px 20px',
+                padding: '10px 14px',
                 background: 'var(--admin-bg-secondary)',
                 borderBottom: '1px solid var(--admin-border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                gap: 8,
+                flexShrink: 0,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
                 <div
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 10,
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
                     background: 'rgba(59,130,246,0.12)',
                     border: '1px solid var(--admin-border-strong)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'var(--admin-accent)',
+                    flexShrink: 0,
                   }}
                 >
-                  <i className="bi bi-film" style={{ fontSize: '1rem' }} />
+                  <i className="bi bi-film" style={{ fontSize: '0.9rem' }} />
                 </div>
 
-                <div>
-                  <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--admin-text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {title}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
                     <span
                       style={{
-                        fontSize: '0.58rem',
+                        fontSize: 'clamp(0.8rem, 2.4vw, 0.95rem)',
                         fontWeight: 800,
-                        padding: '2px 8px',
+                        color: 'var(--admin-text-primary)',
+                        lineHeight: 1.3,
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {title}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '0.55rem',
+                        fontWeight: 800,
+                        padding: '2px 7px',
                         borderRadius: 99,
                         background: 'rgba(59,130,246,0.15)',
                         color: 'var(--admin-accent)',
                         border: '1px solid var(--admin-border-strong)',
-                        letterSpacing: '0.06em',
+                        letterSpacing: '0.05em',
                         textTransform: 'uppercase',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
                       }}
                     >
                       4K Master Cut
@@ -173,8 +201,8 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
               <button
                 onClick={onClose}
                 style={{
-                  width: 34,
-                  height: 34,
+                  width: 32,
+                  height: 32,
                   borderRadius: '50%',
                   background: 'var(--admin-bg-primary)',
                   border: '1px solid var(--admin-border)',
@@ -184,6 +212,7 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
                   alignItems: 'center',
                   justifyContent: 'center',
                   transition: 'all 0.15s ease',
+                  flexShrink: 0,
                 }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.15)';
@@ -197,22 +226,24 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
                 }}
                 title="Close (Esc)"
               >
-                <i className="bi bi-x-lg" style={{ fontSize: '0.9rem' }} />
+                <i className="bi bi-x-lg" style={{ fontSize: '0.85rem' }} />
               </button>
             </div>
 
-            {/* Video Player Container — Strict 16:9 Widescreen */}
+            {/* Video Player Container — Responsive Widescreen */}
             <div
               className="group"
               style={{
                 position: 'relative',
                 width: '100%',
                 aspectRatio: '16 / 9',
+                maxHeight: '65vh',
                 background: '#000000',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
+                flexShrink: 0,
               }}
             >
               {videoSource.isIframe ? (
@@ -227,13 +258,13 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
                   {/* Block the Google Drive pop-out button with logo */}
                   <div style={{
                     position: 'absolute', top: 0, right: 0,
-                    width: 80, height: 56,
+                    width: 70, height: 48,
                     background: 'rgba(0,0,0,0.75)',
                     zIndex: 10,
                     pointerEvents: 'all',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <img src="/logo.png" alt="Logo" style={{ height: 28, width: 'auto', objectFit: 'contain', opacity: 0.9 }} />
+                    <img src="/logo.png" alt="Logo" style={{ height: 24, width: 'auto', objectFit: 'contain', opacity: 0.9 }} />
                   </div>
                 </div>
               ) : (
@@ -270,8 +301,8 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
                     >
                       <div
                         style={{
-                          width: 68,
-                          height: 68,
+                          width: 56,
+                          height: 56,
                           borderRadius: '50%',
                           background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                           border: '2px solid rgba(255, 255, 255, 0.3)',
@@ -282,7 +313,7 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
                           color: '#ffffff',
                         }}
                       >
-                        <i className="bi bi-play-fill" style={{ fontSize: '2.2rem', marginLeft: 4 }} />
+                        <i className="bi bi-play-fill" style={{ fontSize: '1.8rem', marginLeft: 3 }} />
                       </div>
                     </button>
                   )}
@@ -294,11 +325,11 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
                       bottom: 0,
                       left: 0,
                       right: 0,
-                      padding: '16px 20px 12px',
+                      padding: '10px 14px 8px',
                       background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: 8,
+                      gap: 6,
                       opacity: 1,
                       transition: 'opacity 0.2s ease',
                     }}
@@ -318,34 +349,34 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
                       }}
                     />
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#f8fafc', fontSize: '0.78rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#f8fafc', fontSize: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <button
                           onClick={togglePlay}
-                          style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                          style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
                         >
-                          <i className={`bi bi-${isPlaying ? 'pause-fill' : 'play-fill'}`} style={{ fontSize: '1.2rem' }} />
+                          <i className={`bi bi-${isPlaying ? 'pause-fill' : 'play-fill'}`} style={{ fontSize: '1.1rem' }} />
                         </button>
 
                         <button
                           onClick={toggleMute}
-                          style={{ background: 'none', border: 'none', color: isMuted ? '#ef4444' : '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                          style={{ background: 'none', border: 'none', color: isMuted ? '#ef4444' : '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
                         >
-                          <i className={`bi bi-${isMuted ? 'volume-mute-fill' : 'volume-up-fill'}`} style={{ fontSize: '1.1rem' }} />
+                          <i className={`bi bi-${isMuted ? 'volume-mute-fill' : 'volume-up-fill'}`} style={{ fontSize: '1rem' }} />
                         </button>
 
-                        <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#94a3b8' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#94a3b8' }}>
                           {currentTimeStr} / {durationStr}
                         </span>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <button
                           onClick={toggleFullscreen}
-                          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
                           title="Fullscreen"
                         >
-                          <i className="bi bi-arrows-fullscreen" style={{ fontSize: '0.9rem' }} />
+                          <i className="bi bi-arrows-fullscreen" style={{ fontSize: '0.85rem' }} />
                         </button>
                       </div>
                     </div>
@@ -357,25 +388,28 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
             {/* Modal Footer Bar */}
             <div
               style={{
-                padding: '12px 20px',
+                padding: '10px 14px',
                 background: 'var(--admin-bg-secondary)',
                 borderTop: '1px solid var(--admin-border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                fontSize: '0.75rem',
+                gap: 8,
+                flexWrap: 'wrap',
+                fontSize: '0.72rem',
+                flexShrink: 0,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--admin-text-primary)', fontWeight: 600 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
-                <span>AI Creative Direction: Mark Vencent Juntilla</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--admin-text-primary)', fontWeight: 600, minWidth: 0, flexWrap: 'wrap' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399', flexShrink: 0 }} />
+                <span style={{ wordBreak: 'break-word' }}>AI Creative Direction: Mark Vencent Juntilla</span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ padding: '3px 8px', borderRadius: 6, background: 'var(--admin-card)', color: 'var(--admin-accent)', fontSize: '0.68rem', fontWeight: 700, border: '1px solid var(--admin-border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ padding: '2px 7px', borderRadius: 6, background: 'var(--admin-card)', color: 'var(--admin-accent)', fontSize: '0.65rem', fontWeight: 700, border: '1px solid var(--admin-border)', whiteSpace: 'nowrap' }}>
                   Google Flow AI
                 </span>
-                <span style={{ padding: '3px 8px', borderRadius: 6, background: 'var(--admin-card)', color: 'var(--admin-text-muted)', fontSize: '0.68rem', fontWeight: 600, border: '1px solid var(--admin-border)' }}>
+                <span style={{ padding: '2px 7px', borderRadius: 6, background: 'var(--admin-card)', color: 'var(--admin-text-muted)', fontSize: '0.65rem', fontWeight: 600, border: '1px solid var(--admin-border)', whiteSpace: 'nowrap' }}>
                   Premiere Pro
                 </span>
               </div>
