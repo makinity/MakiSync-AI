@@ -82,6 +82,14 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title, format
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
+  const [iframeFallback, setIframeFallback] = useState(false);
+  const isIframe = videoSource.isIframe || iframeFallback;
+
+  // Reset fallback state when videoUrl changes
+  useEffect(() => {
+    setIframeFallback(false);
+  }, [videoUrl]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -248,7 +256,7 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title, format
                 flexShrink: 0,
               }}
             >
-              {videoSource.isIframe ? (
+              {isIframe ? (
                 <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                   <iframe
                     src={videoSource.embedUrl}
@@ -257,17 +265,6 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title, format
                     style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
                     title="Director Cut Showreel"
                   />
-                  {/* Block the Google Drive pop-out button with logo */}
-                  <div style={{
-                    position: 'absolute', top: 0, right: 0,
-                    width: 70, height: 48,
-                    background: 'rgba(0,0,0,0.75)',
-                    zIndex: 10,
-                    pointerEvents: 'all',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <img src="/logo.png" alt="Logo" style={{ height: 24, width: 'auto', objectFit: 'contain', opacity: 0.9 }} />
-                  </div>
                 </div>
               ) : (
                 <>
@@ -276,6 +273,7 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title, format
                     src={videoSource.directUrl || videoUrl}
                     autoPlay
                     onTimeUpdate={handleTimeUpdate}
+                    onError={() => setIframeFallback(true)}
                     onClick={togglePlay}
                     style={{
                       width: '100%',

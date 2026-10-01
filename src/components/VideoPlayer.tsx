@@ -78,8 +78,15 @@ export default function VideoPlayer({ src, poster, onTimeUpdate, seekTime }: Vid
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  // If source is an embedded video (Google Drive preview, YouTube, Vimeo)
-  if (videoSource.isIframe) {
+  const [iframeFallback, setIframeFallback] = useState(false);
+  const isIframe = videoSource.isIframe || iframeFallback;
+
+  useEffect(() => {
+    setIframeFallback(false);
+  }, [src]);
+
+  // If source is an embedded video (YouTube, Vimeo, or fallback)
+  if (isIframe) {
     return (
       <div className="relative aspect-video rounded-2xl overflow-hidden glass-panel border-slate-700/80 group shadow-2xl bg-black">
         <iframe
@@ -89,17 +96,6 @@ export default function VideoPlayer({ src, poster, onTimeUpdate, seekTime }: Vid
           className="w-full h-full border-none"
           title="Commercial Video Presentation"
         />
-        {/* Block the Google Drive pop-out / open button with logo */}
-        <div style={{
-          position: 'absolute', top: 0, right: 0,
-          width: 80, height: 56,
-          background: 'rgba(0,0,0,0.75)',
-          zIndex: 10,
-          pointerEvents: 'all',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <img src="/logo.png" alt="Logo" style={{ height: 28, width: 'auto', objectFit: 'contain', opacity: 0.9 }} />
-        </div>
       </div>
     );
   }
@@ -111,6 +107,7 @@ export default function VideoPlayer({ src, poster, onTimeUpdate, seekTime }: Vid
         src={videoSource.directUrl || src}
         poster={poster}
         onTimeUpdate={handleTimeUpdate}
+        onError={() => setIframeFallback(true)}
         onClick={togglePlay}
         className="w-full h-full object-contain cursor-pointer"
       />

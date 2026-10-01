@@ -65,9 +65,9 @@ export function getVideoSource(url: string): VideoSourceInfo {
   if (gdriveId) {
     return {
       type: 'gdrive',
-      isIframe: true,
+      isIframe: false,
       embedUrl: `https://drive.google.com/file/d/${gdriveId}/preview`,
-      directUrl: `https://drive.google.com/uc?export=download&id=${gdriveId}`,
+      directUrl: `https://drive.usercontent.google.com/download?id=${gdriveId}&export=download`,
       thumbnailUrl: `https://lh3.googleusercontent.com/d/${gdriveId}`,
     };
   }
