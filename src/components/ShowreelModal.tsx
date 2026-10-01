@@ -9,9 +9,10 @@ interface ShowreelModalProps {
   onClose: () => void;
   videoUrl: string;
   title: string;
+  format?: string;
 }
 
-export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: ShowreelModalProps) {
+export default function ShowreelModal({ isOpen, onClose, videoUrl, title, format }: ShowreelModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
@@ -20,6 +21,7 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
   const [durationStr, setDurationStr] = useState('0:00');
 
   const videoSource = getVideoSource(videoUrl);
+  const isVertical = format === '9:16';
 
   // Close on Escape key press
   useEffect(() => {
@@ -118,7 +120,7 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: 'relative',
-              width: 'min(960px, 96vw)',
+              width: isVertical ? 'min(440px, 94vw)' : 'min(960px, 96vw)',
               maxWidth: '100%',
               maxHeight: '94vh',
               background: 'var(--admin-card)',
@@ -191,7 +193,7 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
                         flexShrink: 0,
                       }}
                     >
-                      4K Master Cut
+                      {format ? `${format} Master Cut` : '4K Master Cut'}
                     </span>
                   </div>
                 </div>
@@ -230,14 +232,14 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title }: Show
               </button>
             </div>
 
-            {/* Video Player Container — Responsive Widescreen */}
+            {/* Video Player Container */}
             <div
               className="group"
               style={{
                 position: 'relative',
                 width: '100%',
-                aspectRatio: '16 / 9',
-                maxHeight: '65vh',
+                aspectRatio: isVertical ? '9 / 16' : '16 / 9',
+                maxHeight: isVertical ? '58vh' : '65vh',
                 background: '#000000',
                 display: 'flex',
                 alignItems: 'center',

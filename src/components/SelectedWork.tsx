@@ -392,6 +392,7 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
           onClose={() => setModalProject(null)}
           videoUrl={modalProject.hero_video_url}
           title={modalProject.title}
+          format={modalProject.format}
         />
       )}
 
