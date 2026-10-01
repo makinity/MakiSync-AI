@@ -120,7 +120,7 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title, format
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: 'relative',
-              width: isVertical ? 'min(440px, 94vw)' : 'min(960px, 96vw)',
+              width: isVertical ? 'min(360px, 86vw)' : 'min(960px, 96vw)',
               maxWidth: '100%',
               maxHeight: '94vh',
               background: 'var(--admin-card)',
@@ -239,7 +239,7 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title, format
                 position: 'relative',
                 width: '100%',
                 aspectRatio: isVertical ? '9 / 16' : '16 / 9',
-                maxHeight: isVertical ? '58vh' : '65vh',
+                maxHeight: isVertical ? '72vh' : '65vh',
                 background: '#000000',
                 display: 'flex',
                 alignItems: 'center',
