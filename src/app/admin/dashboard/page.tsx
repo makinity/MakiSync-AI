@@ -73,7 +73,7 @@ function buildFormatData(projects: Project[]) {
 function buildToolsData(projects: Project[]) {
   const map: Record<string, number> = {};
   projects.forEach(p => {
-    (p.tools_used || []).forEach(tool => {
+    (p.tools_used || []).forEach((tool: string) => {
       map[tool] = (map[tool] || 0) + 1;
     });
   });

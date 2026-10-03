@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { uploadMediaFile } from '@/lib/supabase';
-import { formatMediaUrlForStorage, getVideoSource } from '@/lib/videoUtils';
+import { getVideoSource } from '@/lib/videoUtils';
 
 interface MediaDropzoneProps {
   label: string;
@@ -17,11 +17,11 @@ export default function MediaDropzone({
   value,
   onChange,
   acceptType = 'any',
-  placeholder = 'Drag & drop a video/image file here or paste a URL...',
 }: MediaDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'upload' | 'url'>('upload');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const videoSource = getVideoSource(value);
@@ -32,13 +32,20 @@ export default function MediaDropzone({
     const file = files[0];
 
     setUploading(true);
+    setUploadProgress(0);
+    setUploadError('');
     try {
-      const res = await uploadMediaFile(file, 'portfolio-media');
+      const res = await uploadMediaFile(file, 'portfolio-media', (percent) => {
+        setUploadProgress(percent);
+      });
       if (res.url) {
         onChange(res.url);
+      } else if (res.error) {
+        setUploadError(res.error);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('File upload error:', err);
+      setUploadError(err.message || 'File upload failed');
     } finally {
       setUploading(false);
     }
@@ -59,185 +66,131 @@ export default function MediaDropzone({
     handleFiles(e.dataTransfer.files);
   };
 
-  const handleUrlChange = (newUrl: string) => {
-    const formatted = formatMediaUrlForStorage(newUrl, acceptType);
-    onChange(formatted);
-  };
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {/* Label and Mode Selector */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--admin-text-secondary)' }}>
-          {label}
-        </label>
-        
-        <div style={{ display: 'flex', gap: 4, background: 'var(--admin-bg-secondary)', padding: '2px', borderRadius: 8, border: '1px solid var(--admin-border)' }}>
-          <button
-            type="button"
-            onClick={() => setActiveTab('upload')}
-            style={{
-              padding: '3px 8px',
-              borderRadius: 6,
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              border: 'none',
-              cursor: 'pointer',
-              background: activeTab === 'upload' ? 'var(--admin-accent)' : 'transparent',
-              color: activeTab === 'upload' ? '#ffffff' : 'var(--admin-text-muted)',
-            }}
-          >
-            📁 File Drop
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('url')}
-            style={{
-              padding: '3px 8px',
-              borderRadius: 6,
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              border: 'none',
-              cursor: 'pointer',
-              background: activeTab === 'url' ? 'var(--admin-accent)' : 'transparent',
-              color: activeTab === 'url' ? '#ffffff' : 'var(--admin-text-muted)',
-            }}
-          >
-            🔗 Paste URL / Drive
-          </button>
-        </div>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Label */}
+      <label style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--admin-text-muted)' }}>
+        {label}
+      </label>
 
-      {activeTab === 'upload' ? (
-        <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-          style={{
-            position: 'relative',
-            minHeight: 110,
-            borderRadius: 12,
-            border: `2px dashed ${isDragging ? '#3b82f6' : 'var(--admin-border-strong)'}`,
-            background: isDragging ? 'rgba(59,130,246,0.1)' : 'var(--admin-bg-secondary)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '12px',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease',
-            overflow: 'hidden',
-          }}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={acceptType === 'video' ? 'video/*' : acceptType === 'image' ? 'image/*' : '*'}
-            onChange={e => handleFiles(e.target.files)}
-            style={{ display: 'none' }}
-          />
+      {/* Direct Supabase File Drop Area */}
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
+        style={{
+          position: 'relative',
+          minHeight: 120,
+          borderRadius: 14,
+          border: `2px dashed ${isDragging ? '#3b82f6' : 'var(--admin-border)'}`,
+          background: isDragging ? 'rgba(59,130,246,0.1)' : 'var(--admin-bg-secondary)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+          cursor: 'pointer',
+          transition: 'all 0.15s ease',
+          overflow: 'hidden',
+        }}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={acceptType === 'video' ? 'video/*' : acceptType === 'image' ? 'image/*' : '*'}
+          onChange={e => handleFiles(e.target.files)}
+          style={{ display: 'none' }}
+        />
 
-          {uploading ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--admin-accent)', fontSize: '0.8rem', fontWeight: 600 }}>
-              <i className="bi bi-cloud-arrow-up-fill" style={{ fontSize: '1.2rem', animation: 'spin 1.5s linear infinite' }} />
-              Uploading file to Supabase Storage...
+        {uploading ? (
+          <div style={{ width: '100%', maxWidth: 420, padding: '0 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', color: 'var(--admin-accent)', fontSize: '0.82rem', fontWeight: 800 }}>
+              <span><i className="bi bi-cloud-arrow-up-fill" style={{ marginRight: 8 }} /> Uploading to Supabase Storage...</span>
+              <span>{uploadProgress}%</span>
             </div>
-          ) : value ? (
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-              {/* Media Preview */}
-              <div style={{ width: '100%', maxHeight: 140, borderRadius: 8, overflow: 'hidden', background: '#000', display: 'flex', justifyContent: 'center' }}>
-                {videoSource.isIframe ? (
-                  <iframe
-                    src={videoSource.embedUrl}
-                    style={{ width: '100%', height: 140, border: 'none' }}
-                    title="Preview"
-                  />
-                ) : isVideo ? (
-                  <video src={videoSource.directUrl || value} controls style={{ maxHeight: 140, width: '100%', objectFit: 'contain' }} />
-                ) : (
-                  <img src={value} alt="Preview" style={{ maxHeight: 140, width: '100%', objectFit: 'cover' }} />
-                )}
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <i className="bi bi-check-circle-fill" /> Attached ({videoSource.type.toUpperCase()})
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onChange('');
-                  }}
-                  style={{
-                    background: 'rgba(239,68,68,0.12)',
-                    color: '#f87171',
-                    border: '1px solid rgba(239,68,68,0.3)',
-                    padding: '2px 8px',
-                    borderRadius: 6,
-                    fontSize: '0.68rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Clear / Replace
-                </button>
-              </div>
+            <div style={{ width: '100%', height: 8, borderRadius: 99, background: 'rgba(59,130,246,0.15)', overflow: 'hidden' }}>
+              <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)', transition: 'width 0.2s ease', borderRadius: 99 }} />
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', pointerEvents: 'none' }}>
-              <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(59,130,246,0.12)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px' }}>
-                <i className={`bi bi-${acceptType === 'video' ? 'film' : 'cloud-arrow-up-fill'}`} style={{ fontSize: '1.1rem' }} />
-              </div>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--admin-text-primary)' }}>
-                Drag & Drop {acceptType === 'video' ? 'Video' : 'Media'} File Here
-              </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)', marginTop: 2 }}>
-                or click to browse from your computer (.mp4, .webm, .mov, .png, .jpg)
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <input
-            type="text"
-            value={value}
-            onChange={e => handleUrlChange(e.target.value)}
-            placeholder={placeholder}
+          </div>
+        ) : uploadError ? (
+          <div style={{ width: '100%', padding: '10px 14px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, color: '#f87171', fontSize: '0.78rem', textAlign: 'center' }}>
+            <i className="bi bi-exclamation-triangle-fill" style={{ marginRight: 6 }} />
+            {uploadError}
+          </div>
+        ) : value ? (
+          <div
+            onClick={(e) => e.stopPropagation()}
             style={{
               width: '100%',
-              padding: '0.65rem 0.9rem',
-              borderRadius: '10px',
-              background: 'var(--admin-bg-secondary)',
-              border: '1px solid var(--admin-border)',
-              color: 'var(--admin-text-primary)',
-              fontSize: '0.82rem',
-              outline: 'none',
-              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              background: 'rgba(59,130,246,0.08)',
+              border: '1px solid rgba(59,130,246,0.25)',
+              borderRadius: 12,
+              gap: 12,
             }}
-          />
-          {value && (
-            <div style={{ width: '100%', maxHeight: 130, borderRadius: 8, overflow: 'hidden', background: '#000', display: 'flex', justifyContent: 'center' }}>
-              {videoSource.isIframe ? (
-                <iframe
-                  src={videoSource.embedUrl}
-                  style={{ width: '100%', height: 130, border: 'none' }}
-                  title="URL Preview"
-                />
-              ) : isVideo ? (
-                <video src={videoSource.directUrl || value} controls style={{ maxHeight: 130, width: '100%', objectFit: 'contain' }} />
-              ) : (
-                <img src={value} alt="Preview" style={{ maxHeight: 130, width: '100%', objectFit: 'cover' }} />
-              )}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, overflow: 'hidden' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}>
+                <i className={`bi bi-${isVideo ? 'file-earmark-play-fill' : 'file-earmark-image-fill'}`} style={{ fontSize: '1.25rem' }} />
+              </div>
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--admin-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {isVideo ? 'Video File Attached' : 'Image File Attached'}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#34d399', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                  <i className="bi bi-check-circle-fill" /> Storage File Active & Ready
+                </div>
+              </div>
             </div>
-          )}
-          <div style={{ fontSize: '0.68rem', color: 'var(--admin-text-muted)' }}>
-            💡 Supports Google Drive share links, YouTube, Vimeo, and direct MP4/WebM URLs.
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange('');
+              }}
+              style={{
+                background: 'rgba(239,68,68,0.12)',
+                color: '#f87171',
+                border: '1px solid rgba(239,68,68,0.3)',
+                padding: '6px 14px',
+                borderRadius: 8,
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <i className="bi bi-trash3-fill" /> Clear / Replace
+            </button>
           </div>
-        </div>
-      )}
+        ) : (
+          <div style={{ textAlign: 'center', pointerEvents: 'none' }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(59,130,246,0.12)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
+              <i className={`bi bi-${acceptType === 'video' ? 'film' : 'cloud-arrow-up-fill'}`} style={{ fontSize: '1.25rem' }} />
+            </div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--admin-text-primary)' }}>
+              Drag & Drop {acceptType === 'video' ? '80MB+ Video' : 'Image'} File Here
+            </div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted)', marginTop: 4 }}>
+              or click to choose file from your computer (.mp4, .webm, .mov, .jpg, .png)
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <i className="bi bi-shield-check" style={{ color: 'var(--admin-accent)' }} />
+        Direct Supabase Storage upload with automatic HTTP 206 video range streaming.
+      </div>
     </div>
   );
 }

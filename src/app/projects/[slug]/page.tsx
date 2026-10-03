@@ -148,7 +148,7 @@ export default function ProjectCaseStudyPage() {
             background: '#000',
           }}>
             <VideoPlayer
-              src={project.final_video_url || project.hero_video_url}
+              src={project.video_url || project.hero_video_url || project.final_video_url || ''}
               poster={project.thumbnail_url}
             />
           </div>
@@ -191,7 +191,7 @@ export default function ProjectCaseStudyPage() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                {project.tools_used.map((tool, idx) => (
+                {(project.tools_used || []).map((tool: string, idx: number) => (
                   <span
                     key={idx}
                     style={{

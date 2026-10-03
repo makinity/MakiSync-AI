@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Project, SiteSettings, LeadInquiry, MediaAsset } from '@/types/database';
+import { Video, Category, Project, SiteSettings, LeadInquiry, MediaAsset } from '@/types/database';
 import { INITIAL_PROJECTS, INITIAL_SITE_SETTINGS } from './mockData';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -20,29 +20,68 @@ function isUUID(str: string): boolean {
 }
 
 // ==========================================
-// 1. PROJECTS CRUD
+// 1. CATEGORIES & VIDEOS CRUD
 // ==========================================
 
-export async function getPublishedProjects(): Promise<Project[]> {
+export async function getCategories() {
   if (supabase) {
     try {
       const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name', { ascending: true });
+      if (!error && data) return data;
+    } catch (e) {
+      console.error('Fetch categories error:', e);
+    }
+  }
+  return [
+    { id: 'c1', name: 'UGC', slug: 'ugc', description: 'User Generated Content & Social Ads' },
+    { id: 'c2', name: 'VSL', slug: 'vsl', description: 'Video Sales Letters & Commercial Presentations' },
+  ];
+}
+
+export async function getPublishedVideos(): Promise<Video[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('videos')
+        .select('*, category:categories(*)')
+        .eq('status', 'published')
+        .order('display_order', { ascending: true });
+        
+      if (!error && data) {
+        return data.map(v => ({
+          ...v,
+          hero_video_url: v.video_url,
+          final_video_url: v.video_url,
+        })) as Video[];
+      }
+    } catch (e) {
+      console.error('Supabase fetch published videos failed, fallback to projects:', e);
+    }
+
+    // Fallback if videos table query fails
+    try {
+      const { data: legacyData, error: legacyErr } = await supabase
         .from('projects')
         .select('*')
         .eq('status', 'published')
         .order('display_order', { ascending: true });
-        
-      if (!error && data) return data as Project[];
-    } catch (e) {
-      console.error('Supabase fetch published projects failed:', e);
-    }
+      if (!legacyErr && legacyData) {
+        return legacyData.map(p => ({
+          ...p,
+          video_url: p.hero_video_url || p.final_video_url,
+        })) as Video[];
+      }
+    } catch (e) {}
   }
 
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem(STORAGE_KEY_PROJECTS);
     if (stored) {
       try {
-        const parsed: Project[] = JSON.parse(stored);
+        const parsed: Video[] = JSON.parse(stored);
         return parsed.filter(p => p.status === 'published').sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
       } catch (e) {}
     }
@@ -50,18 +89,31 @@ export async function getPublishedProjects(): Promise<Project[]> {
   return [];
 }
 
-export async function getAllProjects(): Promise<Project[]> {
+export async function getAllVideos(): Promise<Video[]> {
   if (supabase) {
     try {
       const { data, error } = await supabase
-        .from('projects')
-        .select('*')
+        .from('videos')
+        .select('*, category:categories(*)')
         .order('display_order', { ascending: true });
         
-      if (!error && data) return data as Project[];
+      if (!error && data) {
+        return data.map(v => ({
+          ...v,
+          hero_video_url: v.video_url,
+          final_video_url: v.video_url,
+        })) as Video[];
+      }
     } catch (e) {
-      console.error('Supabase fetch all projects failed:', e);
+      console.error('Supabase fetch all videos failed:', e);
     }
+
+    try {
+      const { data: legacyData } = await supabase.from('projects').select('*').order('display_order', { ascending: true });
+      if (legacyData) {
+        return legacyData.map(p => ({ ...p, video_url: p.hero_video_url || p.final_video_url })) as Video[];
+      }
+    } catch (e) {}
   }
 
   if (typeof window !== 'undefined') {
@@ -75,62 +127,139 @@ export async function getAllProjects(): Promise<Project[]> {
   return [];
 }
 
-export async function getProjectBySlug(slug: string): Promise<Project | null> {
-  const projects = await getAllProjects();
-  return projects.find(p => p.slug === slug) || null;
+// Aliases for seamless backward compatibility
+export const getPublishedProjects = getPublishedVideos;
+export const getAllProjects = getAllVideos;
+
+export async function getVideoBySlug(slug: string): Promise<Video | null> {
+  const videos = await getAllVideos();
+  return videos.find(p => p.slug === slug || p.id === slug) || null;
+}
+export const getProjectBySlug = getVideoBySlug;
+
+export async function deleteStorageFileFromUrl(url: string, bucketName = 'portfolio-media'): Promise<boolean> {
+  if (!url || !supabase) return false;
+  try {
+    if (url.includes(`/storage/v1/object/public/${bucketName}/`)) {
+      const parts = url.split(`/storage/v1/object/public/${bucketName}/`);
+      if (parts.length > 1) {
+        const filePath = parts[1];
+        const { error } = await supabase.storage.from(bucketName).remove([filePath]);
+        if (!error) {
+          console.log(`Successfully deleted storage file: ${filePath}`);
+          return true;
+        } else {
+          console.warn(`Failed to delete storage file ${filePath}:`, error.message);
+        }
+      }
+    }
+  } catch (err: any) {
+    console.warn('Storage file removal exception:', err);
+  }
+  return false;
 }
 
-export async function saveProject(project: Project): Promise<void> {
-  // Always update local storage for instant UI responsiveness
+export async function saveVideo(video: Partial<Video>): Promise<void> {
+  const validId = isUUID(video.id || '') ? video.id : undefined;
+  const validCategoryId = isUUID(video.category_id || '') ? video.category_id : undefined;
+
+  const videoPayload: Record<string, any> = {
+    title: video.title || 'Untitled Video',
+    slug: video.slug || (video.title ? video.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : 'video'),
+    description: video.description || '',
+    video_url: video.video_url || video.hero_video_url || '',
+    thumbnail_url: video.thumbnail_url || '',
+    format: video.format || '9:16',
+    duration: video.duration || '0:30',
+    display_order: video.display_order ?? 0,
+    status: video.status || 'published',
+    updated_at: new Date().toISOString(),
+  };
+
+  if (validId) videoPayload.id = validId;
+  if (validCategoryId) videoPayload.category_id = validCategoryId;
+
   if (typeof window !== 'undefined') {
-    const projects = await getAllProjects();
-    const index = projects.findIndex(p => p.id === project.id);
+    const list = await getAllVideos();
+    const targetId = validId || video.id;
+    const index = list.findIndex(p => p.id === targetId);
     if (index >= 0) {
-      projects[index] = { ...project, updated_at: new Date().toISOString() };
+      list[index] = { ...list[index], ...videoPayload } as Video;
     } else {
-      projects.push({ ...project, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+      list.push({ ...videoPayload, id: targetId || ('v_' + Date.now()), created_at: new Date().toISOString() } as Video);
     }
-    localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
+    localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(list));
   }
 
   if (supabase) {
     try {
-      const res = await fetch('/api/admin/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(project),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        console.error('saveProject API error:', data.error || res.statusText);
+      // 1. If updating an existing video with valid UUID, remove orphaned storage file if video URL changed
+      if (validId) {
+        const { data: existing } = await supabase
+          .from('videos')
+          .select('video_url, thumbnail_url')
+          .eq('id', validId)
+          .maybeSingle();
+
+        if (existing) {
+          if (existing.video_url && videoPayload.video_url && existing.video_url !== videoPayload.video_url) {
+            await deleteStorageFileFromUrl(existing.video_url);
+          }
+          if (existing.thumbnail_url && videoPayload.thumbnail_url && existing.thumbnail_url !== videoPayload.thumbnail_url) {
+            await deleteStorageFileFromUrl(existing.thumbnail_url);
+          }
+        }
       }
-    } catch (e) {
-      console.error('saveProject API exception:', e);
+
+      // 2. Save video record to database
+      const { error } = await supabase.from('videos').upsert(videoPayload);
+      if (error) {
+        console.error('Supabase videos upsert error:', error.message);
+        throw new Error(`Database save error: ${error.message}`);
+      }
+    } catch (e: any) {
+      console.error('saveVideo exception:', e);
+      throw e;
     }
   }
 }
+export const saveProject = saveVideo;
 
-export async function deleteProject(id: string): Promise<void> {
+export async function deleteVideo(id: string): Promise<void> {
   if (typeof window !== 'undefined') {
-    const projects = await getAllProjects();
-    const updated = projects.filter(p => p.id !== id);
+    const list = await getAllVideos();
+    const updated = list.filter(p => p.id !== id);
     localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(updated));
   }
 
   if (supabase) {
     try {
-      const res = await fetch(`/api/admin/projects/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        console.error('deleteProject API error:', data.error || res.statusText);
+      if (isUUID(id)) {
+        // 1. Fetch video record to get attached storage files
+        const { data: existing } = await supabase
+          .from('videos')
+          .select('video_url, thumbnail_url')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (existing) {
+          if (existing.video_url) await deleteStorageFileFromUrl(existing.video_url);
+          if (existing.thumbnail_url) await deleteStorageFileFromUrl(existing.thumbnail_url);
+        }
+
+        // 2. Delete database rows
+        await supabase.from('videos').delete().eq('id', id);
+        await supabase.from('projects').delete().eq('id', id);
+      } else {
+        await supabase.from('videos').delete().eq('slug', id);
+        await supabase.from('projects').delete().eq('slug', id);
       }
     } catch (e) {
-      console.error('deleteProject API exception:', e);
+      console.error('deleteVideo exception:', e);
     }
   }
 }
+export const deleteProject = deleteVideo;
 
 // ==========================================
 // 2. SITE SETTINGS & SHOWREEL CMS
@@ -344,33 +473,65 @@ export async function deleteAsset(id: string): Promise<void> {
 // 5. SUPABASE STORAGE FILE UPLOAD
 // ==========================================
 
-export async function uploadMediaFile(file: File, bucketName = 'portfolio-media'): Promise<{ url: string; error?: string }> {
-  if (supabase) {
+export async function uploadMediaFile(
+  file: File, 
+  bucketName = 'portfolio-media',
+  onProgress?: (percent: number) => void
+): Promise<{ url: string; error?: string }> {
+  if (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('your-new-project-id')) {
     try {
       const fileExt = file.name.split('.').pop() || 'bin';
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
       const filePath = `uploads/${fileName}`;
 
-      const { data, error } = await supabase.storage.from(bucketName).upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true,
-      });
+      return new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucketName}/${filePath}`;
 
-      if (!error && data) {
-        const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(filePath);
-        if (publicUrlData?.publicUrl) {
-          return { url: publicUrlData.publicUrl };
-        }
-      } else if (error) {
-        console.warn('Supabase Storage upload warning:', error.message);
-      }
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable && onProgress) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            onProgress(percent);
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
+            resolve({ url: publicUrl });
+          } else if (xhr.status === 413) {
+            resolve({ 
+              url: '', 
+              error: `File size limit (80MB+) exceeded. Please set "Max File Size" limit to 100MB+ under Storage -> Buckets -> ${bucketName} in your Supabase Dashboard.` 
+            });
+          } else {
+            let errText = 'Upload failed';
+            try {
+              const res = JSON.parse(xhr.responseText);
+              errText = res.message || res.error || errText;
+            } catch (e) {}
+            resolve({ url: '', error: errText });
+          }
+        };
+
+        xhr.onerror = () => {
+          resolve({ url: '', error: 'Network error during media upload' });
+        };
+
+        xhr.open('POST', uploadUrl, true);
+        xhr.setRequestHeader('Authorization', `Bearer ${supabaseAnonKey}`);
+        xhr.setRequestHeader('apikey', supabaseAnonKey);
+        xhr.setRequestHeader('x-upsert', 'true');
+        xhr.send(file);
+      });
     } catch (err: any) {
       console.warn('Supabase Storage upload exception:', err.message);
     }
   }
 
-  // Fallback to local Object URL for instant browser playback/preview
+  // Fallback to local Object URL for instant browser preview
   if (typeof window !== 'undefined') {
+    if (onProgress) onProgress(100);
     const objectUrl = URL.createObjectURL(file);
     return { url: objectUrl };
   }

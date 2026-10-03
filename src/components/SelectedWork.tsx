@@ -4,28 +4,25 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { getVideoSource } from '@/lib/videoUtils';
 import ShowreelModal from './ShowreelModal';
-
-interface Project {
-  id: string;
-  slug: string;
-  title: string;
-  client_spec?: string;
-  format?: string;
-  duration?: string;
-  description: string;
-  thumbnail_url: string;
-  hero_video_url: string;
-  tools_used?: string[];
-}
+import { Video } from '@/types/database';
 
 interface SelectedWorkProps {
-  projects: Project[];
+  projects: Video[];
 }
 
 export default function SelectedWork({ projects }: SelectedWorkProps) {
+  const [selectedCategory, setSelectedCategory] = useState<'ALL' | 'UGC' | 'VSL'>('ALL');
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [modalProject, setModalProject] = useState<Project | null>(null);
+  const [modalProject, setModalProject] = useState<Video | null>(null);
+
+  const filteredProjects = projects.filter((p: any) => {
+    if (selectedCategory === 'ALL') return true;
+    const catName = p.category?.name || (p.format === '16:9' ? 'VSL' : 'UGC');
+    return catName.toUpperCase() === selectedCategory;
+  });
+
+  const displayProjects = filteredProjects.length > 0 ? filteredProjects : projects;
 
   // Drag / swipe state
   const dragStartX = useRef<number | null>(null);
@@ -33,11 +30,16 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
   const isDragging = useRef(false);
 
   const goTo = useCallback((index: number) => {
-    setActiveIndex(Math.max(0, Math.min(index, projects.length - 1)));
-  }, [projects.length]);
+    setActiveIndex(Math.max(0, Math.min(index, displayProjects.length - 1)));
+  }, [displayProjects.length]);
 
   const handlePrev = useCallback(() => goTo(activeIndex - 1), [activeIndex, goTo]);
   const handleNext = useCallback(() => goTo(activeIndex + 1), [activeIndex, goTo]);
+
+  const handleCategoryChange = (cat: 'ALL' | 'UGC' | 'VSL') => {
+    setSelectedCategory(cat);
+    setActiveIndex(0);
+  };
 
   // Keyboard navigation
   useEffect(() => {
@@ -74,7 +76,7 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
     setTimeout(() => { isDragging.current = false; }, 10);
   };
 
-  const handleCardClick = (project: Project, e: React.MouseEvent) => {
+  const handleCardClick = (project: Video, e: React.MouseEvent) => {
     if (isDragging.current) return;
     setModalProject(project);
   };
@@ -86,8 +88,8 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
     >
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '3.5rem', flexWrap: 'wrap', gap: 16 }}>
+        {/* Header & Filter Tabs */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2.5rem', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -112,9 +114,69 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
               </span>
             </h2>
           </div>
-          <p style={{ maxWidth: 360, fontSize: '0.82rem', color: 'var(--admin-text-muted)', lineHeight: 1.6, margin: 0 }}>
-            High-converting AI video ads and UGC commercial concepts engineered for performance and visual impact.
-          </p>
+
+          {/* Category Filter Tabs */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '5px',
+            borderRadius: 14,
+            background: 'var(--admin-card)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid var(--admin-border)',
+            boxShadow: 'var(--admin-shadow)',
+          }}>
+            {[
+              { id: 'ALL', label: 'All Projects', icon: 'bi-grid-fill' },
+              { id: 'UGC', label: 'UGC Social Ads', icon: 'bi-phone-fill' },
+              { id: 'VSL', label: 'VSL Commercials', icon: 'bi-play-btn-fill' },
+            ].map((cat) => {
+              const active = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => handleCategoryChange(cat.id as any)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 7,
+                    padding: '0.55rem 1.15rem',
+                    borderRadius: 10,
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    background: active 
+                      ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' 
+                      : 'transparent',
+                    color: active ? '#ffffff' : 'var(--admin-text-secondary)',
+                    boxShadow: active 
+                      ? '0 4px 16px rgba(59, 130, 246, 0.4)' 
+                      : 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'var(--admin-bg-secondary)';
+                      e.currentTarget.style.color = 'var(--admin-text-primary)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'var(--admin-text-secondary)';
+                    }
+                  }}
+                >
+                  <i className={`bi ${cat.icon}`} style={{ fontSize: '0.8rem', color: active ? '#ffffff' : 'var(--admin-accent)' }} />
+                  <span>{cat.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -128,13 +190,13 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
         style={{ position: 'relative', cursor: 'grab', userSelect: 'none' }}
       >
         <div className="carousel-track">
-          {projects.map((project, index) => {
+          {displayProjects.map((project, index) => {
             const offset = index - activeIndex;
             const isActive = offset === 0;
             const isVisible = Math.abs(offset) <= 2;
             if (!isVisible) return null;
 
-            const heroSource = getVideoSource(project.hero_video_url);
+            const heroSource = getVideoSource(project.video_url || project.hero_video_url || '');
             const isHovered = hoveredId === project.id;
 
             const translateX = offset * 68;
@@ -348,7 +410,7 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
           </button>
 
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {projects.map((_, i) => (
+            {displayProjects.map((_, i) => (
               <button
                 key={i}
                 onClick={() => goTo(i)}
@@ -365,13 +427,13 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
 
           <button
             onClick={handleNext}
-            disabled={activeIndex === projects.length - 1}
+            disabled={activeIndex === displayProjects.length - 1}
             style={{
               width: 44, height: 44, borderRadius: '50%',
-              background: activeIndex === projects.length - 1 ? 'var(--admin-bg-secondary)' : 'var(--admin-card)',
+              background: activeIndex === displayProjects.length - 1 ? 'var(--admin-bg-secondary)' : 'var(--admin-card)',
               border: '1px solid var(--admin-border)',
-              color: activeIndex === projects.length - 1 ? 'var(--admin-text-muted)' : 'var(--admin-text-primary)',
-              cursor: activeIndex === projects.length - 1 ? 'not-allowed' : 'pointer',
+              color: activeIndex === displayProjects.length - 1 ? 'var(--admin-text-muted)' : 'var(--admin-text-primary)',
+              cursor: activeIndex === displayProjects.length - 1 ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.2s', fontSize: 16,
             }}
@@ -381,7 +443,7 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 12, fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>
-          {activeIndex + 1} / {projects.length}
+          {activeIndex + 1} / {displayProjects.length}
         </p>
       </div>
 
@@ -390,7 +452,7 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
         <ShowreelModal
           isOpen={!!modalProject}
           onClose={() => setModalProject(null)}
-          videoUrl={modalProject.hero_video_url}
+          videoUrl={modalProject.video_url || modalProject.hero_video_url || ''}
           title={modalProject.title}
           format={modalProject.format}
         />

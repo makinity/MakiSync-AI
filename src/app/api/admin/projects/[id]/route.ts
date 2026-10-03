@@ -5,7 +5,7 @@ function isUUID(str: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 }
 
-// DELETE /api/admin/projects/[id] — delete a project by id or slug
+// DELETE /api/admin/projects/[id] — delete a project from videos and projects tables
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -21,18 +21,32 @@ export async function DELETE(
       return NextResponse.json({ error: 'Missing project id' }, { status: 400 });
     }
 
-    let query = supabaseAdmin.from('projects').delete();
     if (isUUID(id)) {
-      query = query.eq('id', id);
+      // 1. Fetch record to remove storage file if hosted on Supabase
+      const { data: existing } = await supabaseAdmin
+        .from('videos')
+        .select('video_url, thumbnail_url')
+        .eq('id', id)
+        .single();
+
+      if (existing) {
+        const bucketName = 'portfolio-media';
+        if (existing.video_url?.includes(`/storage/v1/object/public/${bucketName}/`)) {
+          const filePath = existing.video_url.split(`/storage/v1/object/public/${bucketName}/`)[1];
+          if (filePath) await supabaseAdmin.storage.from(bucketName).remove([filePath]);
+        }
+        if (existing.thumbnail_url?.includes(`/storage/v1/object/public/${bucketName}/`)) {
+          const filePath = existing.thumbnail_url.split(`/storage/v1/object/public/${bucketName}/`)[1];
+          if (filePath) await supabaseAdmin.storage.from(bucketName).remove([filePath]);
+        }
+      }
+
+      // 2. Delete database rows
+      await supabaseAdmin.from('videos').delete().eq('id', id);
+      await supabaseAdmin.from('projects').delete().eq('id', id);
     } else {
-      query = query.eq('slug', id);
-    }
-
-    const { error } = await query;
-
-    if (error) {
-      console.error('Admin delete project error:', error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      await supabaseAdmin.from('videos').delete().eq('slug', id);
+      await supabaseAdmin.from('projects').delete().eq('slug', id);
     }
 
     return NextResponse.json({ success: true });

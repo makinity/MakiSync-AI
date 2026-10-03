@@ -1,39 +1,41 @@
-export type ProjectStatus = 'draft' | 'published' | 'archived';
+export type VideoStatus = 'draft' | 'published' | 'archived';
 
-export interface ShotBreakdownItem {
-  shot_number: number;
-  framing: string;
-  description: string;
-  prompt_strategy: string;
-  continuity_note?: string;
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  created_at?: string;
 }
 
-export interface Project {
+export interface Video {
   id: string;
+  category_id?: string;
+  category?: Category;
   title: string;
   slug: string;
-  client_spec?: string;
-  description: string;
+  description?: string;
+  video_url: string;
   thumbnail_url: string;
-  hero_video_url: string;
-  final_video_url?: string;
+  format: string; // '9:16' or '16:9'
   duration?: string;
-  format?: string; // '16:9' or '9:16'
-  role?: string;
-  brief?: string;
-  advertising_objective?: string;
-  creative_direction?: string;
-  story_narrative?: string;
-  production_process?: string;
-  shot_breakdown?: ShotBreakdownItem[];
-  tools_used: string[];
-  gallery_urls?: string[];
-  is_featured?: boolean;
-  status: ProjectStatus;
   display_order?: number;
+  status: VideoStatus;
   created_at?: string;
   updated_at?: string;
+
+  // Legacy compatibility fields
+  hero_video_url?: string;
+  final_video_url?: string;
+  client_spec?: string;
+  tools_used?: string[];
+  is_featured?: boolean;
+  role?: string;
 }
+
+// Alias for backward compatibility
+export type Project = Video;
+export type ProjectStatus = VideoStatus;
 
 export interface HeroSettings {
   headline: string;

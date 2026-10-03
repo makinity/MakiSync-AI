@@ -46,8 +46,38 @@ export async function POST(req: NextRequest) {
     const trimmedUsername = String(username).trim();
     const trimmedPassword = String(password).trim();
 
-    // 1. If Supabase is connected, query the users table (case-insensitive)
     if (supabase) {
+      // Method A: Check Supabase Built-in Auth (Authentication -> Users)
+      try {
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: trimmedUsername,
+          password: trimmedPassword,
+        });
+
+        if (!authError && authData?.user) {
+          clearAttempts(ip);
+          const token = await signToken({
+            id: authData.user.id,
+            username: authData.user.email || trimmedUsername,
+            role: 'admin',
+          });
+
+          const response = NextResponse.json({ success: true });
+          response.cookies.set(COOKIE_NAME, token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7,
+            path: '/',
+          });
+
+          return response;
+        }
+      } catch (authErr) {
+        // Continue to Method B if auth.signInWithPassword fails or isn't used
+      }
+
+      // Method B: Check Custom Database Table (Table Editor -> users)
       try {
         const { data: users, error } = await supabase
           .from('users')
@@ -72,7 +102,7 @@ export async function POST(req: NextRequest) {
               httpOnly: true,
               secure: process.env.NODE_ENV === 'production',
               sameSite: 'lax',
-              maxAge: 60 * 60 * 24 * 7, // 7 days
+              maxAge: 60 * 60 * 24 * 7,
               path: '/',
             });
 
@@ -80,11 +110,11 @@ export async function POST(req: NextRequest) {
           }
         }
       } catch (dbErr) {
-        console.warn('Supabase auth query notice:', dbErr);
+        console.warn('Supabase db users query notice:', dbErr);
       }
     }
 
-    // 2. Fallback passkey verification for local dev / initial setup
+    // Method C: Fallback passkey verification for initial local dev
     const validUsernames = ['admin', 'makisync', 'mark vencent juntilla', 'markjuntillava@gmail.com'];
     const validPasswords = ['admin123', 'makisync2026', 'password', 'admin', 'password123'];
 

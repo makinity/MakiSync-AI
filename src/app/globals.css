@@ -1,7 +1,5 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 @import 'bootstrap-icons/font/bootstrap-icons.css';
-
-@custom-variant dark (&:is(.dark *));
 
 :root[data-theme="dark"], :root {
   --admin-bg-primary:    #0a0f1a;
