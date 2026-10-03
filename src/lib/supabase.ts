@@ -478,6 +478,51 @@ export async function uploadMediaFile(
   bucketName = 'portfolio-media',
   onProgress?: (percent: number) => void
 ): Promise<{ url: string; error?: string }> {
+  // 1. Try Cloudflare R2 Upload API first
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const r2Result = await new Promise<{ url: string; error?: string }>((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && onProgress) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.url) resolve({ url: data.url });
+            else resolve({ url: '', error: data.error });
+          } catch {
+            resolve({ url: '', error: 'Parse error' });
+          }
+        } else {
+          try {
+            const res = JSON.parse(xhr.responseText);
+            resolve({ url: '', error: res.error });
+          } catch {
+            resolve({ url: '', error: 'HTTP error' });
+          }
+        }
+      };
+
+      xhr.onerror = () => resolve({ url: '', error: 'Network error' });
+      xhr.open('POST', '/api/admin/upload-r2', true);
+      xhr.send(formData);
+    });
+
+    if (r2Result.url) {
+      return r2Result;
+    }
+  } catch (r2Err) {
+    console.warn('Cloudflare R2 upload notice, attempting Supabase fallback:', r2Err);
+  }
+
+  // 2. Fallback to Supabase Storage if R2 is not configured
   if (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('your-new-project-id')) {
     try {
       const fileExt = file.name.split('.').pop() || 'bin';
