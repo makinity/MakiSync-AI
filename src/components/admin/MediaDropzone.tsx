@@ -66,6 +66,9 @@ export default function MediaDropzone({
     handleFiles(e.dataTransfer.files);
   };
 
+  const isR2Storage = value.includes('.r2.dev') || value.includes('r2.cloudflarestorage.com');
+  const isSupabaseStorage = value.includes('supabase.co');
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* Label */}
@@ -134,15 +137,16 @@ export default function MediaDropzone({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, overflow: 'hidden' }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}>
-                <i className={`bi bi-${isVideo ? 'file-earmark-play-fill' : 'file-earmark-image-fill'}`} style={{ fontSize: '1.25rem' }} />
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: isR2Storage ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: isR2Storage ? '0 4px 12px rgba(249,115,22,0.35)' : '0 4px 12px rgba(59,130,246,0.3)' }}>
+                <i className={`bi bi-${isVideo ? (isR2Storage ? 'cloud-check-fill' : 'file-earmark-play-fill') : 'file-earmark-image-fill'}`} style={{ fontSize: '1.25rem' }} />
               </div>
               <div style={{ overflow: 'hidden' }}>
                 <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--admin-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {isVideo ? 'Video File Attached' : 'Image File Attached'}
+                  {isVideo ? (isR2Storage ? 'Cloudflare R2 Video Attached' : 'Video File Attached') : 'Image File Attached'}
                 </div>
-                <div style={{ fontSize: '0.72rem', color: '#34d399', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                  <i className="bi bi-check-circle-fill" /> Storage File Active & Ready
+                <div style={{ fontSize: '0.72rem', color: isR2Storage ? '#f97316' : isSupabaseStorage ? '#fbbf24' : '#34d399', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                  <i className={`bi bi-${isR2Storage ? 'cloud-fill' : 'database-fill'}`} />
+                  {isR2Storage ? 'Cloudflare R2 Edge Storage Active' : isSupabaseStorage ? 'Supabase Storage (Replace with R2 file)' : 'Storage File Active & Ready'}
                 </div>
               </div>
             </div>

@@ -530,13 +530,31 @@ export async function uploadMediaFile(
           xhr.send(file);
         });
 
-        if (r2UploadResult.url) {
-          return r2UploadResult;
-        }
       }
     }
   } catch (r2Err) {
-    console.warn('Direct Cloudflare R2 upload notice, fallback to Supabase:', r2Err);
+    console.warn('Direct Cloudflare R2 upload notice:', r2Err);
+  }
+
+  // 1b. Server-side Cloudflare R2 Upload Fallback (bypasses browser CORS for Cloudflare R2)
+  if (file.size < 4.5 * 1024 * 1024) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const serverR2Res = await fetch('/api/admin/upload-r2', {
+        method: 'POST',
+        body: formData,
+      });
+      if (serverR2Res.ok) {
+        const serverR2Data = await serverR2Res.json();
+        if (serverR2Data.url) {
+          if (onProgress) onProgress(100);
+          return { url: serverR2Data.url };
+        }
+      }
+    } catch (serverErr) {
+      console.warn('Server Cloudflare R2 upload fallback notice:', serverErr);
+    }
   }
 
   // 2. Fallback to Supabase Storage if R2 is not configured
