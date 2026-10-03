@@ -46,6 +46,20 @@ const GROQ_MODELS = [
   'llama-3.1-8b-instant',
 ];
 
+import fs from 'fs';
+import path from 'path';
+
+// Read master knowledge base file dynamically if available
+function getMasterKnowledgeBase(): string {
+  try {
+    const kbPath = path.join(process.cwd(), 'knowledge.md');
+    if (fs.existsSync(kbPath)) {
+      return fs.readFileSync(kbPath, 'utf8');
+    }
+  } catch (e) {}
+  return '';
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
@@ -73,7 +87,8 @@ export async function POST(req: NextRequest) {
       console.warn('MakiBot live knowledge sync notice:', e);
     }
 
-    const fullSystemPrompt = `${BASE_SYSTEM_PROMPT}${liveProjectsKnowledge}`;
+    const masterKB = getMasterKnowledgeBase();
+    const fullSystemPrompt = `${BASE_SYSTEM_PROMPT}\n\n${masterKB ? `=== MASTER KNOWLEDGE BASE FILE (knowledge.md) ===\n${masterKB}\n\n` : ''}${liveProjectsKnowledge}`;
 
     // Sanitize message array to enforce OpenAI/Groq sequence rules (Must start with 'user')
     const sanitizedMessages = (messages || [])
