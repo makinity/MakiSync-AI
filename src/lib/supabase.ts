@@ -493,48 +493,50 @@ export async function uploadMediaFile(
   bucketName = 'portfolio-media',
   onProgress?: (percent: number) => void
 ): Promise<{ url: string; error?: string }> {
-  // 1. Try Cloudflare R2 Upload API first
+  // 1. Try Direct Presigned Cloudflare R2 Upload (Bypasses Vercel 4.5MB serverless payload limit)
   try {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const r2Result = await new Promise<{ url: string; error?: string }>((resolve) => {
-      const xhr = new XMLHttpRequest();
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable && onProgress) {
-          onProgress(Math.round((e.loaded / e.total) * 100));
-        }
-      };
-
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const data = JSON.parse(xhr.responseText);
-            if (data.url) resolve({ url: data.url });
-            else resolve({ url: '', error: data.error });
-          } catch {
-            resolve({ url: '', error: 'Parse error' });
-          }
-        } else {
-          try {
-            const res = JSON.parse(xhr.responseText);
-            resolve({ url: '', error: res.error });
-          } catch {
-            resolve({ url: '', error: 'HTTP error' });
-          }
-        }
-      };
-
-      xhr.onerror = () => resolve({ url: '', error: 'Network error' });
-      xhr.open('POST', '/api/admin/upload-r2', true);
-      xhr.send(formData);
+    const res = await fetch('/api/admin/get-r2-upload-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        contentType: file.type || 'application/octet-stream',
+      }),
     });
 
-    if (r2Result.url) {
-      return r2Result;
+    if (res.ok) {
+      const data = await res.json();
+      if (data.uploadUrl && data.publicUrl) {
+        const r2UploadResult = await new Promise<{ url: string; error?: string }>((resolve) => {
+          const xhr = new XMLHttpRequest();
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable && onProgress) {
+              onProgress(Math.round((e.loaded / e.total) * 100));
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve({ url: data.publicUrl });
+            } else {
+              resolve({ url: '', error: `R2 Direct Upload HTTP ${xhr.status}` });
+            }
+          };
+
+          xhr.onerror = () => resolve({ url: '', error: 'Network error during R2 upload' });
+          xhr.open('PUT', data.uploadUrl, true);
+          xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+          xhr.setRequestHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          xhr.send(file);
+        });
+
+        if (r2UploadResult.url) {
+          return r2UploadResult;
+        }
+      }
     }
   } catch (r2Err) {
-    console.warn('Cloudflare R2 upload notice, attempting Supabase fallback:', r2Err);
+    console.warn('Direct Cloudflare R2 upload notice, fallback to Supabase:', r2Err);
   }
 
   // 2. Fallback to Supabase Storage if R2 is not configured

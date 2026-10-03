@@ -33,17 +33,40 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
   });
 
   useEffect(() => {
+    if (initialData && initialData.id) {
+      setForm({
+        id: initialData.id,
+        title: initialData.title || '',
+        slug: initialData.slug || '',
+        category_id: initialData.category_id || '',
+        description: initialData.description || '',
+        thumbnail_url: initialData.thumbnail_url || '',
+        video_url: initialData.video_url || initialData.hero_video_url || '',
+        duration: initialData.duration || '0:30',
+        format: initialData.format || '9:16',
+        status: initialData.status || 'published',
+        display_order: initialData.display_order ?? 1,
+      });
+    }
+  }, [initialData]);
+
+  useEffect(() => {
     async function loadCats() {
       const cats = await getCategories();
       if (cats && cats.length > 0) {
         setCategories(cats);
         if (!form.category_id) {
-          setForm(f => ({ ...f, category_id: cats[0].id }));
+          const matchingCat = cats.find(c => 
+            form.format === '9:16'
+              ? c.name.toUpperCase() === 'UGC' || c.slug === 'ugc'
+              : c.name.toUpperCase() === 'VSL' || c.slug === 'vsl'
+          );
+          setForm(f => ({ ...f, category_id: matchingCat ? matchingCat.id : cats[0].id }));
         }
       }
     }
     loadCats();
-  }, [form.category_id]);
+  }, [form.category_id, form.format]);
 
   const handleTitleChange = (val: string) => {
     const updated: Partial<Video> = { ...form, title: val };
@@ -65,7 +88,16 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
   };
 
   const handleFormatChange = (fmt: string) => {
-    setForm(f => ({ ...f, format: fmt }));
+    const matchingCat = categories.find(c => 
+      fmt === '9:16'
+        ? c.name.toUpperCase() === 'UGC' || c.slug === 'ugc'
+        : c.name.toUpperCase() === 'VSL' || c.slug === 'vsl'
+    );
+    setForm(f => ({
+      ...f,
+      format: fmt,
+      ...(matchingCat ? { category_id: matchingCat.id } : {})
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,6 +135,7 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
+    boxSizing: 'border-box',
     padding: '0.75rem 1rem',
     borderRadius: 12,
     background: 'var(--admin-bg-secondary)',
