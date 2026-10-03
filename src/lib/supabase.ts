@@ -137,24 +137,39 @@ export async function getVideoBySlug(slug: string): Promise<Video | null> {
 }
 export const getProjectBySlug = getVideoBySlug;
 
+import { deleteFromR2 } from './r2';
+
 export async function deleteStorageFileFromUrl(url: string, bucketName = 'portfolio-media'): Promise<boolean> {
-  if (!url || !supabase) return false;
-  try {
-    if (url.includes(`/storage/v1/object/public/${bucketName}/`)) {
+  if (!url) return false;
+
+  // 1. Check if file is stored in Cloudflare R2 (.r2.dev or /uploads/)
+  if (url.includes('.r2.dev') || url.includes('/uploads/')) {
+    try {
+      const deletedR2 = await deleteFromR2(url);
+      if (deletedR2) {
+        console.log(`Successfully deleted R2 storage file for URL: ${url}`);
+        return true;
+      }
+    } catch (e) {}
+  }
+
+  // 2. Check if file is stored in Supabase Storage
+  if (supabase && url.includes(`/storage/v1/object/public/${bucketName}/`)) {
+    try {
       const parts = url.split(`/storage/v1/object/public/${bucketName}/`);
       if (parts.length > 1) {
         const filePath = parts[1];
         const { error } = await supabase.storage.from(bucketName).remove([filePath]);
         if (!error) {
-          console.log(`Successfully deleted storage file: ${filePath}`);
+          console.log(`Successfully deleted Supabase storage file: ${filePath}`);
           return true;
         } else {
-          console.warn(`Failed to delete storage file ${filePath}:`, error.message);
+          console.warn(`Failed to delete Supabase storage file ${filePath}:`, error.message);
         }
       }
+    } catch (err: any) {
+      console.warn('Supabase storage file removal exception:', err);
     }
-  } catch (err: any) {
-    console.warn('Storage file removal exception:', err);
   }
   return false;
 }
