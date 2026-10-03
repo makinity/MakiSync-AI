@@ -17,6 +17,7 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [videoError, setVideoError] = useState(false);
 
   const [form, setForm] = useState<Partial<Video>>({
     id: initialData?.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'v_' + Date.now()),
@@ -439,12 +440,22 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
                           style={{ width: '100%', height: '100%', border: 'none' }}
                           title="Live Studio Video Preview"
                         />
+                      ) : videoError ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: '#f87171', fontSize: '0.78rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8 }}>
+                          <i className="bi bi-exclamation-triangle-fill" style={{ fontSize: '1.5rem', color: '#f87171' }} />
+                          <div style={{ fontWeight: 800 }}>QuickTime (.mov) Playback Issue</div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)', textAlign: 'center', lineHeight: 1.4 }}>
+                            Web browsers cannot stream 50MB QuickTime (.mov) files directly. Upload standard MP4 (H.264) for instant web playback.
+                          </div>
+                        </div>
                       ) : (
                         <video
+                          key={activeVideoUrl}
                           src={videoSource.directUrl || activeVideoUrl}
                           controls
                           playsInline
                           preload="metadata"
+                          onError={() => setVideoError(true)}
                           style={{ width: '100%', height: '100%', objectFit: form.format === '9:16' ? 'cover' : 'contain' }}
                         />
                       )}
