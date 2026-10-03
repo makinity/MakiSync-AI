@@ -268,7 +268,7 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
                     ) : (
                       <video
                         src={heroSource.directUrl || project.hero_video_url}
-                        autoPlay loop muted playsInline
+                        autoPlay loop muted playsInline preload="metadata"
                         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     )

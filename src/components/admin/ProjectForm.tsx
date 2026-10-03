@@ -411,6 +411,7 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
                           src={videoSource.directUrl || activeVideoUrl}
                           controls
                           playsInline
+                          preload="metadata"
                           style={{ width: '100%', height: '100%', objectFit: form.format === '9:16' ? 'cover' : 'contain' }}
                         />
                       )}

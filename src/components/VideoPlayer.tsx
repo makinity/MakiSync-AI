@@ -106,6 +106,8 @@ export default function VideoPlayer({ src, poster, onTimeUpdate, seekTime }: Vid
         ref={videoRef}
         src={videoSource.directUrl || src}
         poster={poster}
+        preload="metadata"
+        playsInline
         onTimeUpdate={handleTimeUpdate}
         onError={() => setIframeFallback(true)}
         onClick={togglePlay}

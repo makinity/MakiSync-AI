@@ -272,6 +272,8 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title, format
                     ref={videoRef}
                     src={videoSource.directUrl || videoUrl}
                     autoPlay
+                    preload="metadata"
+                    playsInline
                     onTimeUpdate={handleTimeUpdate}
                     onError={() => setIframeFallback(true)}
                     onClick={togglePlay}
