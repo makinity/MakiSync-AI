@@ -245,7 +245,7 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
                 {/* Direct File Upload */}
                 <div>
                   <MediaDropzone
-                    label="Video File (Direct Supabase Upload) *"
+                    label="Video File (Cloudflare R2 Edge Storage) *"
                     value={activeVideoUrl}
                     onChange={handleVideoUrlChange}
                     acceptType="video"

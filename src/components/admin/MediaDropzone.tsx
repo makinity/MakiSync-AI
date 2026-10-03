@@ -106,7 +106,7 @@ export default function MediaDropzone({
         {uploading ? (
           <div style={{ width: '100%', maxWidth: 420, padding: '0 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', color: 'var(--admin-accent)', fontSize: '0.82rem', fontWeight: 800 }}>
-              <span><i className="bi bi-cloud-arrow-up-fill" style={{ marginRight: 8 }} /> Uploading to Supabase Storage...</span>
+              <span><i className="bi bi-cloud-arrow-up-fill" style={{ marginRight: 8 }} /> Uploading to Cloudflare R2 Edge Storage...</span>
               <span>{uploadProgress}%</span>
             </div>
             <div style={{ width: '100%', height: 8, borderRadius: 99, background: 'rgba(59,130,246,0.15)', overflow: 'hidden' }}>
@@ -189,7 +189,7 @@ export default function MediaDropzone({
 
       <div style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
         <i className="bi bi-shield-check" style={{ color: 'var(--admin-accent)' }} />
-        Direct Supabase Storage upload with automatic HTTP 206 video range streaming.
+        Cloudflare R2 Edge Storage upload with instant global CDN video streaming.
       </div>
     </div>
   );
