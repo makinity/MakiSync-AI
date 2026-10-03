@@ -11,9 +11,10 @@ interface Message {
 }
 
 const QUICK_PROMPTS = [
-  'What services does Mark offer?',
-  'What AI tools does Mark use?',
-  'How can I hire Mark for a project?',
+  'What AI tools & video models do you use?',
+  'Show me your 9:16 UGC video projects',
+  'What is your turnaround time & workflow?',
+  'How can I hire Mark for an AI ad campaign?',
 ];
 
 function FormattedText({ content }: { content: string }) {
@@ -486,6 +487,24 @@ export default function MakiBot() {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Quick Action Footer Chips */}
+            <div style={{ padding: '6px 16px', background: 'var(--admin-bg-secondary)', display: 'flex', gap: 6, overflowX: 'auto', borderTop: '1px solid var(--admin-border)' }}>
+              <a
+                href="#contact"
+                onClick={() => setIsOpen(false)}
+                style={{ fontSize: '0.7rem', fontWeight: 800, padding: '4px 10px', borderRadius: 99, background: 'rgba(59,130,246,0.12)', color: '#3b82f6', textDecoration: 'none', border: '1px solid rgba(59,130,246,0.25)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                <i className="bi bi-envelope-paper-fill" /> Hire Mark / Inquire
+              </a>
+              <a
+                href="#selected-work"
+                onClick={() => setIsOpen(false)}
+                style={{ fontSize: '0.7rem', fontWeight: 700, padding: '4px 10px', borderRadius: 99, background: 'var(--admin-card)', color: 'var(--admin-text-secondary)', textDecoration: 'none', border: '1px solid var(--admin-border)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                <i className="bi bi-collection-play-fill" /> Explore Portfolio
+              </a>
+            </div>
+
             {/* Input Bar */}
             <form
               onSubmit={e => {
@@ -493,8 +512,7 @@ export default function MakiBot() {
                 handleSend();
               }}
               style={{
-                padding:      '12px 16px 16px 16px',
-                borderTop:    '1px solid var(--admin-border)',
+                padding:      '10px 16px 14px 16px',
                 background:   'var(--admin-bg-secondary)',
                 display:      'flex',
                 alignItems:   'center',
