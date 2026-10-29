@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { getVideoSource } from '@/lib/videoUtils';
 import ShowreelModal from './ShowreelModal';
@@ -39,6 +39,7 @@ export default function SelectedWork({ projects, categories: initialCategories }
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [modalProject, setModalProject] = useState<Video | null>(null);
+  const gridTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (initialCategories && initialCategories.length > 0) {
@@ -49,13 +50,6 @@ export default function SelectedWork({ projects, categories: initialCategories }
       });
     }
   }, [initialCategories]);
-
-  // Count projects per category
-  const projectCounts: Record<string, number> = {};
-  projects.forEach((p: any) => {
-    const name = (p.category?.name || (p.format === '16:9' ? 'VSL' : 'UGC')).toUpperCase();
-    projectCounts[name] = (projectCounts[name] || 0) + 1;
-  });
 
   // Sort categories according to preferred display order
   const sortedCategories = [...categories].sort((a, b) => {
@@ -93,58 +87,89 @@ export default function SelectedWork({ projects, categories: initialCategories }
 
   const handleCategoryChange = (catId: string) => {
     setSelectedCategory(catId);
+
+    // If visitor has scrolled down into the grid, smoothly scroll back to top of the video grid
+    if (gridTopRef.current) {
+      const rect = gridTopRef.current.getBoundingClientRect();
+      if (rect.top < 140) {
+        gridTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
   };
 
   return (
     <section
       id="selected-work"
-      style={{ padding: '6rem 0', background: 'var(--admin-bg-primary)', position: 'relative', overflow: 'hidden' }}
+      style={{
+        padding: '5rem 0 6rem',
+        background: 'var(--admin-bg-primary)',
+        position: 'relative',
+        overflowX: 'clip',
+        overflowY: 'visible',
+      }}
     >
       <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 2rem' }}>
 
-        {/* Section Header & Dynamic Filter Tabs */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '3rem', flexWrap: 'wrap', gap: 20 }}>
-          <div>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.12em',
-              textTransform: 'uppercase', color: 'var(--admin-accent)',
-              marginBottom: 10, padding: '3px 10px', borderRadius: 99,
-              background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)',
-            }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--admin-accent)' }} />
-              AI Commercial Director &amp; Animator
-            </div>
-            <h2 style={{
-              fontSize: 'clamp(2rem, 4.5vw, 3rem)', fontWeight: 900,
-              color: 'var(--admin-text-primary)', letterSpacing: '-0.03em', margin: 0,
-            }}>
-              Selected Work &amp;{' '}
-              <span style={{
-                background: 'var(--heading-gradient)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-              }}>
-                Commercials
-              </span>
-            </h2>
-          </div>
-
-          {/* Category Filter Tabs (Scrollable pill bar) */}
+        {/* Section Header */}
+        <div style={{ marginBottom: '2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '6px',
-            borderRadius: 16,
-            background: 'var(--admin-card)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid var(--admin-border)',
-            boxShadow: 'var(--admin-shadow)',
-            maxWidth: '100%',
-            overflowX: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            scrollbarWidth: 'none',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.12em',
+            textTransform: 'uppercase', color: 'var(--admin-accent)',
+            marginBottom: 10, padding: '4px 12px', borderRadius: 99,
+            background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)',
           }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--admin-accent)' }} />
+            AI Commercial Director &amp; Animator
+          </div>
+          <h2 style={{
+            fontSize: 'clamp(2.2rem, 5vw, 3.2rem)', fontWeight: 900,
+            color: 'var(--admin-text-primary)', letterSpacing: '-0.03em', margin: 0,
+          }}>
+            Selected Work &amp;{' '}
+            <span style={{
+              background: 'var(--heading-gradient)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+            }}>
+              Commercials
+            </span>
+          </h2>
+        </div>
+
+        {/* Sticky Floating Category Filter Bar (Confined strictly to #selected-work section) */}
+        <div
+          className="sticky-category-wrapper"
+          style={{
+            position: 'sticky',
+            top: 76,
+            zIndex: 40,
+            padding: '8px 0 16px',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+          }}
+        >
+          <div
+            className="sticky-category-pill"
+            style={{
+              pointerEvents: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 8px',
+              borderRadius: 20,
+              background: 'var(--nav-bg, rgba(10, 15, 26, 0.9))',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid var(--admin-border)',
+              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(59, 130, 246, 0.12)',
+              maxWidth: '100%',
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+            }}
+          >
             {filterTabs.map((cat) => {
               const active = selectedCategory === cat.id;
               return (
@@ -157,7 +182,7 @@ export default function SelectedWork({ projects, categories: initialCategories }
                     alignItems: 'center',
                     gap: 7,
                     padding: '0.55rem 1.1rem',
-                    borderRadius: 11,
+                    borderRadius: 12,
                     fontSize: '0.78rem',
                     fontWeight: 700,
                     letterSpacing: '0.02em',
@@ -194,6 +219,9 @@ export default function SelectedWork({ projects, categories: initialCategories }
             })}
           </div>
         </div>
+
+        {/* Scroll anchor target for smooth glide back to top of grid */}
+        <div ref={gridTopRef} style={{ scrollMarginTop: 160 }} />
 
         {/* 3-COLUMN VIDEO GRID OR EMPTY STATE */}
         {displayProjects.length === 0 ? (
@@ -517,11 +545,17 @@ export default function SelectedWork({ projects, categories: initialCategories }
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 1.5rem !important;
           }
+          .sticky-category-wrapper {
+            top: 68px !important;
+          }
         }
         @media (max-width: 640px) {
           .three-column-grid {
             grid-template-columns: 1fr !important;
             gap: 1.25rem !important;
+          }
+          .sticky-category-wrapper {
+            top: 64px !important;
           }
         }
       `}</style>
