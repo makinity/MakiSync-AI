@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getVideoSource } from '@/lib/videoUtils';
 import ShowreelModal from './ShowreelModal';
 import { Video } from '@/types/database';
+import MediaThumbnail from '@/components/MediaThumbnail';
 
 interface SelectedWorkProps {
   projects: Video[];
@@ -233,12 +234,12 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
               >
                 {/* Video / Thumbnail */}
                 <div style={{ position: 'relative', aspectRatio: '16/9', background: '#050810', overflow: 'hidden', flexShrink: 0 }}>
-                  <img
+                  <MediaThumbnail
                     src={project.thumbnail_url}
+                    videoFallbackUrl={project.video_url || project.hero_video_url}
                     alt={project.title}
                     draggable={false}
                     style={{
-                      width: '100%', height: '100%', objectFit: 'cover',
                       transition: 'transform 0.5s, opacity 0.3s',
                       transform: isHovered ? 'scale(1.05)' : 'scale(1)',
                       opacity: isHovered ? 0.15 : 1,

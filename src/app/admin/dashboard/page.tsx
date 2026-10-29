@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import AppLayout from '@/layouts/AppLayout';
 import { getAllProjects, getInquiries } from '@/lib/supabase';
 import { Project, LeadInquiry } from '@/types/database';
+import MediaThumbnail from '@/components/MediaThumbnail';
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -360,7 +361,12 @@ export default function AdminDashboardPage() {
                   <tr key={p.id} style={{ borderBottom: '1px solid var(--admin-border)' }}>
                     <td style={{ padding: '0.85rem 1.25rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <img src={p.thumbnail_url} alt={p.title} style={{ width: 44, height: 30, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--admin-border)', flexShrink: 0 }} />
+                        <MediaThumbnail
+                          src={p.thumbnail_url}
+                          videoFallbackUrl={p.video_url || p.hero_video_url}
+                          alt={p.title}
+                          style={{ width: 44, height: 30, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--admin-border)', flexShrink: 0 }}
+                        />
                         <div>
                           <div style={{ fontWeight: 700, color: 'var(--admin-text-primary)', lineHeight: 1.3 }}>{p.title}</div>
                           <div style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)' }}>/{p.slug}</div>

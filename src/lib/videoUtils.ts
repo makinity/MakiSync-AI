@@ -116,3 +116,164 @@ export function formatMediaUrlForStorage(url: string, mediaType: 'image' | 'vide
   }
   return url;
 }
+
+/**
+ * Checks if a given URL is a direct video file (.mp4, .mov, .webm, etc.)
+ */
+export function isVideoFileUrl(url?: string | null): boolean {
+  if (!url) return false;
+  const clean = url.split('?')[0].split('#')[0].toLowerCase();
+  return (
+    clean.endsWith('.mp4') ||
+    clean.endsWith('.mov') ||
+    clean.endsWith('.webm') ||
+    clean.endsWith('.m4v') ||
+    clean.endsWith('.ogv') ||
+    clean.includes('/video/') ||
+    clean.endsWith('.m3u8')
+  );
+}
+
+/**
+ * Captures a representative frame from a video File (or URL) as an image File.
+ * Runs in the browser using HTML5 Canvas.
+ */
+export async function captureVideoThumbnail(
+  source: File | string,
+  timeInSeconds: number = 1.0
+): Promise<File> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') {
+      return reject(new Error('Canvas capture is only supported in browser environment'));
+    }
+
+    const video = document.createElement('video');
+    video.crossOrigin = 'anonymous';
+    video.preload = 'metadata';
+    video.muted = true;
+    video.playsInline = true;
+
+    let objectUrl = '';
+    if (typeof source === 'string') {
+      video.src = source;
+    } else {
+      objectUrl = URL.createObjectURL(source);
+      video.src = objectUrl;
+    }
+
+    let cleaned = false;
+    const cleanUp = () => {
+      if (cleaned) return;
+      cleaned = true;
+      if (objectUrl) {
+        try {
+          URL.revokeObjectURL(objectUrl);
+        } catch (_) {}
+      }
+      video.removeAttribute('src');
+      video.load();
+    };
+
+    const timeout = setTimeout(() => {
+      cleanUp();
+      reject(new Error('Video thumbnail capture timed out after 12 seconds'));
+    }, 12000);
+
+    const onSeeked = () => {
+      video.removeEventListener('seeked', onSeeked);
+      try {
+        const width = video.videoWidth || 1280;
+        const height = video.videoHeight || 720;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          cleanUp();
+          clearTimeout(timeout);
+          reject(new Error('Failed to get 2D canvas context'));
+          return;
+        }
+
+        ctx.drawImage(video, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            cleanUp();
+            clearTimeout(timeout);
+            if (blob) {
+              const file = new File([blob], `thumb_${Date.now()}.jpg`, {
+                type: 'image/jpeg',
+              });
+              resolve(file);
+            } else {
+              reject(new Error('Canvas toBlob failed'));
+            }
+          },
+          'image/jpeg',
+          0.88
+        );
+      } catch (err) {
+        cleanUp();
+        clearTimeout(timeout);
+        reject(err);
+      }
+    };
+
+    video.addEventListener('loadedmetadata', () => {
+      const dur = video.duration || 1;
+      const target = dur > timeInSeconds ? timeInSeconds : dur / 2;
+      video.currentTime = target > 0 ? target : 0.1;
+    });
+
+    video.addEventListener('seeked', onSeeked);
+
+    video.addEventListener('error', () => {
+      cleanUp();
+      clearTimeout(timeout);
+      reject(new Error('Video element failed to load for frame capture'));
+    });
+  });
+}
+
+/**
+ * Captures the current visible frame from a mounted <video> element.
+ */
+export async function captureFrameFromVideoElement(video: HTMLVideoElement): Promise<File> {
+  return new Promise((resolve, reject) => {
+    try {
+      const width = video.videoWidth || video.clientWidth || 1280;
+      const height = video.videoHeight || video.clientHeight || 720;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return reject(new Error('Failed to get 2D canvas context'));
+      }
+
+      ctx.drawImage(video, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const file = new File([blob], `thumb_${Date.now()}.jpg`, {
+              type: 'image/jpeg',
+            });
+            resolve(file);
+          } else {
+            reject(new Error('Canvas toBlob conversion failed'));
+          }
+        },
+        'image/jpeg',
+        0.88
+      );
+    } catch (err) {
+      reject(err);
+    }
+  });
+}

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import AppLayout from '@/layouts/AppLayout';
 import ConfirmModal from '@/components/ConfirmModal';
 import { Project } from '@/types/database';
+import MediaThumbnail from '@/components/MediaThumbnail';
 import { getAllProjects, deleteProject } from '@/lib/supabase';
 
 export default function AdminProjectsPage() {
@@ -300,10 +301,10 @@ export default function AdminProjectsPage() {
                 >
                   {/* Card Thumbnail Header */}
                   <div style={{ position: 'relative', aspectRatio: p.format === '16:9' ? '16/9' : '16/9', background: '#050810', overflow: 'hidden' }}>
-                    <img
+                    <MediaThumbnail
                       src={p.thumbnail_url}
+                      videoFallbackUrl={p.video_url || p.hero_video_url}
                       alt={p.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
 
                     {/* Top Left Badges */}
@@ -522,19 +523,20 @@ export default function AdminProjectsPage() {
                       >
                         <td style={{ padding: '1rem 1.25rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                            <img
-                              src={p.thumbnail_url}
-                              alt={p.title}
-                              style={{
-                                width: 56,
-                                height: 38,
-                                borderRadius: 8,
-                                objectFit: 'cover',
-                                background: 'var(--admin-bg-secondary)',
-                                border: '1px solid var(--admin-border)',
-                                flexShrink: 0
-                              }}
-                            />
+                            <MediaThumbnail
+                                src={p.thumbnail_url}
+                                videoFallbackUrl={p.video_url || p.hero_video_url}
+                                alt={p.title}
+                                style={{
+                                  width: 56,
+                                  height: 38,
+                                  borderRadius: 8,
+                                  objectFit: 'cover',
+                                  background: 'var(--admin-bg-secondary)',
+                                  border: '1px solid var(--admin-border)',
+                                  flexShrink: 0,
+                                }}
+                              />
                             <div>
                               <div style={{ fontWeight: 700, color: 'var(--admin-text-primary)', lineHeight: 1.3 }}>
                                 {p.title}

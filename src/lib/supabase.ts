@@ -530,6 +530,10 @@ export async function uploadMediaFile(
           xhr.send(file);
         });
 
+        if (r2UploadResult && r2UploadResult.url) {
+          if (onProgress) onProgress(100);
+          return { url: r2UploadResult.url };
+        }
       }
     }
   } catch (r2Err) {

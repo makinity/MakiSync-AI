@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/layouts/AppLayout';
 import MediaDropzone from '@/components/admin/MediaDropzone';
+import MediaThumbnail from '@/components/MediaThumbnail';
 import { Video, Category } from '@/types/database';
-import { saveVideo, getCategories } from '@/lib/supabase';
-import { getVideoSource } from '@/lib/videoUtils';
+import { saveVideo, getCategories, uploadMediaFile } from '@/lib/supabase';
+import { getVideoSource, isVideoFileUrl, captureFrameFromVideoElement } from '@/lib/videoUtils';
 
 interface ProjectFormProps {
   initialData?: Partial<Video>;
@@ -18,6 +19,12 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [videoError, setVideoError] = useState(false);
+
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
+  const customThumbInputRef = useRef<HTMLInputElement>(null);
+  const [capturingThumb, setCapturingThumb] = useState(false);
+  const [uploadingCustomThumb, setUploadingCustomThumb] = useState(false);
+  const [thumbNotice, setThumbNotice] = useState('');
 
   const [form, setForm] = useState<Partial<Video>>({
     id: initialData?.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'v_' + Date.now()),
@@ -83,8 +90,14 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
       ...form,
       video_url: url,
       hero_video_url: url,
-      thumbnail_url: form.thumbnail_url || source.thumbnailUrl || url,
     };
+    // If it's a known embed (YouTube / Google Drive) with a direct thumbnail image:
+    if (source.thumbnailUrl) {
+      updated.thumbnail_url = source.thumbnailUrl;
+    } else if (form.thumbnail_url && !isVideoFileUrl(form.thumbnail_url)) {
+      // Keep existing valid image thumbnail
+      updated.thumbnail_url = form.thumbnail_url;
+    }
     setForm(updated);
   };
 
@@ -99,6 +112,54 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
       format: fmt,
       ...(matchingCat ? { category_id: matchingCat.id } : {})
     }));
+  };
+
+  const handleCaptureFrame = async () => {
+    if (!videoPreviewRef.current) {
+      alert('Video player is not ready to capture frames.');
+      return;
+    }
+    setCapturingThumb(true);
+    setThumbNotice('');
+    try {
+      const file = await captureFrameFromVideoElement(videoPreviewRef.current);
+      const res = await uploadMediaFile(file, 'portfolio-media');
+      if (res && res.url) {
+        setForm(f => ({ ...f, thumbnail_url: res.url }));
+        setThumbNotice('Snapshot captured & saved as thumbnail!');
+        setTimeout(() => setThumbNotice(''), 4500);
+      } else {
+        alert(res?.error || 'Failed to upload captured frame');
+      }
+    } catch (err: any) {
+      console.error('Frame capture error:', err);
+      alert(err.message || 'Could not capture frame from video.');
+    } finally {
+      setCapturingThumb(false);
+    }
+  };
+
+  const handleCustomThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingCustomThumb(true);
+    setThumbNotice('');
+    try {
+      const res = await uploadMediaFile(files[0], 'portfolio-media');
+      if (res && res.url) {
+        setForm(f => ({ ...f, thumbnail_url: res.url }));
+        setThumbNotice('Custom thumbnail image uploaded!');
+        setTimeout(() => setThumbNotice(''), 4500);
+      } else {
+        alert(res?.error || 'Failed to upload thumbnail');
+      }
+    } catch (err: any) {
+      console.error('Thumbnail upload error:', err);
+      alert(err.message || 'Thumbnail upload failed');
+    } finally {
+      setUploadingCustomThumb(false);
+      if (customThumbInputRef.current) customThumbInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,6 +184,7 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
   const activeVideoUrl = form.video_url || form.hero_video_url || '';
   const videoSource = getVideoSource(activeVideoUrl);
   const selectedCategory = categories.find(c => c.id === form.category_id);
+  const hasValidImageThumb = form.thumbnail_url && !isVideoFileUrl(form.thumbnail_url);
 
   const lblStyle: React.CSSProperties = {
     display: 'block',
@@ -276,14 +338,139 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
                   />
                 </div>
 
-                {/* Direct File Upload */}
+                {/* Direct Video File Upload */}
                 <div>
                   <MediaDropzone
                     label="Video File (Cloudflare R2 Edge Storage) *"
                     value={activeVideoUrl}
                     onChange={handleVideoUrlChange}
+                    onThumbnailGenerated={(thumbUrl) => {
+                      setForm(prev => ({ ...prev, thumbnail_url: thumbUrl }));
+                    }}
                     acceptType="video"
                   />
+                </div>
+
+                {/* Dedicated Thumbnail / Poster Image Configuration */}
+                <div
+                  style={{
+                    padding: '1.25rem',
+                    borderRadius: 14,
+                    background: 'var(--admin-bg-secondary)',
+                    border: '1px solid var(--admin-border)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                    <label style={{ ...lblStyle, marginBottom: 0 }}>
+                      Cover Thumbnail Image
+                    </label>
+                    {hasValidImageThumb ? (
+                      <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                        <i className="bi bi-check-circle-fill" /> Active Image Thumbnail
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '0.7rem', color: '#fbbf24', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                        <i className="bi bi-exclamation-triangle-fill" /> Auto-frame fallback active
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                    {/* Thumbnail Preview Box */}
+                    <div
+                      style={{
+                        width: 110,
+                        aspectRatio: form.format === '9:16' ? '9/16' : '16/9',
+                        borderRadius: 10,
+                        overflow: 'hidden',
+                        background: '#050810',
+                        border: '1px solid var(--admin-border)',
+                        flexShrink: 0,
+                        position: 'relative',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                      }}
+                    >
+                      <MediaThumbnail
+                        src={form.thumbnail_url}
+                        videoFallbackUrl={activeVideoUrl}
+                        alt="Project Thumbnail"
+                      />
+                    </div>
+
+                    {/* Actions & Status */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)', lineHeight: 1.4 }}>
+                        {hasValidImageThumb
+                          ? 'Real image thumbnail is configured and will display crisply across the portfolio.'
+                          : 'Videos without an image thumbnail use the video frame fallback. Upload a custom cover or snap a live frame from the player on the right.'}
+                      </div>
+
+                      {thumbNotice && (
+                        <div style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <i className="bi bi-check-lg" /> {thumbNotice}
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => customThumbInputRef.current?.click()}
+                          disabled={uploadingCustomThumb}
+                          style={{
+                            padding: '0.5rem 0.9rem',
+                            borderRadius: 8,
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            background: 'var(--admin-card)',
+                            border: '1px solid var(--admin-border)',
+                            color: 'var(--admin-text-primary)',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                          }}
+                        >
+                          <i className="bi bi-image" />
+                          {uploadingCustomThumb ? 'Uploading Image...' : 'Upload Cover Image'}
+                        </button>
+
+                        {activeVideoUrl && !videoSource.isIframe && (
+                          <button
+                            type="button"
+                            onClick={handleCaptureFrame}
+                            disabled={capturingThumb}
+                            style={{
+                              padding: '0.5rem 0.9rem',
+                              borderRadius: 8,
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              background: 'rgba(59,130,246,0.12)',
+                              border: '1px solid rgba(59,130,246,0.3)',
+                              color: '#60a5fa',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}
+                          >
+                            <i className={`bi bi-${capturingThumb ? 'arrow-repeat spin' : 'camera-fill'}`} />
+                            {capturingThumb ? 'Capturing Frame...' : 'Snap from Video'}
+                          </button>
+                        )}
+                      </div>
+
+                      <input
+                        ref={customThumbInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={handleCustomThumbnailUpload}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Aspect Ratio Cards */}
@@ -418,48 +605,85 @@ export default function ProjectForm({ initialData, isNew = false }: ProjectFormP
                 </div>
 
                 {/* Video Player Display Container */}
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', minHeight: 340, padding: '12px 0' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', minHeight: 340, padding: '12px 0', gap: 14 }}>
                   {activeVideoUrl ? (
-                    <div
-                      style={{
-                        width: '100%',
-                        maxWidth: form.format === '9:16' ? 270 : '100%',
-                        aspectRatio: form.format === '9:16' ? '9/16' : '16/9',
-                        borderRadius: form.format === '9:16' ? 24 : 14,
-                        overflow: 'hidden',
-                        background: '#000',
-                        boxShadow: '0 16px 36px rgba(0,0,0,0.35)',
-                        border: form.format === '9:16' ? '5px solid #1f2937' : '1px solid var(--admin-border)',
-                        position: 'relative',
-                        transition: 'all 0.25s ease',
-                      }}
-                    >
-                      {videoSource.isIframe ? (
-                        <iframe
-                          src={videoSource.embedUrl}
-                          style={{ width: '100%', height: '100%', border: 'none' }}
-                          title="Live Studio Video Preview"
-                        />
-                      ) : videoError ? (
-                        <div style={{ padding: '20px', textAlign: 'center', color: '#f87171', fontSize: '0.78rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8 }}>
-                          <i className="bi bi-exclamation-triangle-fill" style={{ fontSize: '1.5rem', color: '#f87171' }} />
-                          <div style={{ fontWeight: 800 }}>QuickTime (.mov) Playback Issue</div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)', textAlign: 'center', lineHeight: 1.4 }}>
-                            Web browsers cannot stream 50MB QuickTime (.mov) files directly. Upload standard MP4 (H.264) for instant web playback.
+                    <>
+                      <div
+                        style={{
+                          width: '100%',
+                          maxWidth: form.format === '9:16' ? 270 : '100%',
+                          aspectRatio: form.format === '9:16' ? '9/16' : '16/9',
+                          borderRadius: form.format === '9:16' ? 24 : 14,
+                          overflow: 'hidden',
+                          background: '#000',
+                          boxShadow: '0 16px 36px rgba(0,0,0,0.35)',
+                          border: form.format === '9:16' ? '5px solid #1f2937' : '1px solid var(--admin-border)',
+                          position: 'relative',
+                          transition: 'all 0.25s ease',
+                        }}
+                      >
+                        {videoSource.isIframe ? (
+                          <iframe
+                            src={videoSource.embedUrl}
+                            style={{ width: '100%', height: '100%', border: 'none' }}
+                            title="Live Studio Video Preview"
+                          />
+                        ) : videoError ? (
+                          <div style={{ padding: '20px', textAlign: 'center', color: '#f87171', fontSize: '0.78rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8 }}>
+                            <i className="bi bi-exclamation-triangle-fill" style={{ fontSize: '1.5rem', color: '#f87171' }} />
+                            <div style={{ fontWeight: 800 }}>QuickTime (.mov) Playback Issue</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)', textAlign: 'center', lineHeight: 1.4 }}>
+                              Web browsers cannot stream 50MB QuickTime (.mov) files directly. Upload standard MP4 (H.264) for instant web playback.
+                            </div>
+                          </div>
+                        ) : (
+                          <video
+                            ref={videoPreviewRef}
+                            key={activeVideoUrl}
+                            src={videoSource.directUrl || activeVideoUrl}
+                            controls
+                            playsInline
+                            crossOrigin="anonymous"
+                            preload="metadata"
+                            onError={() => setVideoError(true)}
+                            style={{ width: '100%', height: '100%', objectFit: form.format === '9:16' ? 'cover' : 'contain' }}
+                          />
+                        )}
+                      </div>
+
+                      {/* Snap Frame Shortcut Button */}
+                      {!videoSource.isIframe && !videoError && (
+                        <div style={{ width: '100%', maxWidth: form.format === '9:16' ? 270 : '100%' }}>
+                          <button
+                            type="button"
+                            onClick={handleCaptureFrame}
+                            disabled={capturingThumb}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 8,
+                              padding: '0.65rem 1rem',
+                              borderRadius: 12,
+                              background: 'linear-gradient(135deg, rgba(59,130,246,0.18) 0%, rgba(37,99,235,0.18) 100%)',
+                              border: '1px solid rgba(59,130,246,0.35)',
+                              color: '#60a5fa',
+                              fontSize: '0.78rem',
+                              fontWeight: 800,
+                              cursor: capturingThumb ? 'not-allowed' : 'pointer',
+                              width: '100%',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            <i className={`bi bi-${capturingThumb ? 'arrow-repeat spin' : 'camera-fill'}`} />
+                            {capturingThumb ? 'Snapping & Uploading...' : '📸 Snap Current Frame as Thumbnail'}
+                          </button>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--admin-text-muted)', textAlign: 'center', marginTop: 5 }}>
+                            Scrub player to any frame, then click above to save as cover.
                           </div>
                         </div>
-                      ) : (
-                        <video
-                          key={activeVideoUrl}
-                          src={videoSource.directUrl || activeVideoUrl}
-                          controls
-                          playsInline
-                          preload="metadata"
-                          onError={() => setVideoError(true)}
-                          style={{ width: '100%', height: '100%', objectFit: form.format === '9:16' ? 'cover' : 'contain' }}
-                        />
                       )}
-                    </div>
+                    </>
                   ) : (
                     <div
                       style={{
