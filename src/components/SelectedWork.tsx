@@ -67,15 +67,10 @@ export default function SelectedWork({ projects, categories: initialCategories }
     return a.name.localeCompare(b.name);
   });
 
-  // Only display categories that currently have uploaded projects (prevents empty tabs on live site)
-  // Or keep selected if user explicitly selected it
-  const activeCategories = sortedCategories.filter(
-    (c) => (projectCounts[c.name.toUpperCase()] || 0) > 0 || selectedCategory === c.name.toUpperCase()
-  );
-
+  // Always show all categories in the filter bar
   const filterTabs = [
     { id: 'ALL', label: 'All Projects', icon: CATEGORY_ICONS.ALL },
-    ...activeCategories.map((c) => ({
+    ...sortedCategories.map((c) => ({
       id: c.name.toUpperCase(),
       label: c.name,
       icon: CATEGORY_ICONS[c.name.toUpperCase()] || 'bi-film',
