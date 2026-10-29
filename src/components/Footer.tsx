@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 
 export default function Footer() {
   return (
@@ -36,9 +36,9 @@ export default function Footer() {
           <nav style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
             {[
               { label: 'Work', href: '#selected-work' },
-              { label: 'Approach', href: '#approach' },
-              { label: 'Capabilities', href: '#capabilities' },
+              { label: 'Services', href: '#approach' },
               { label: 'About', href: '#about' },
+              { label: 'Contact', href: '#contact' },
             ].map(link => (
               <a
                 key={link.label}

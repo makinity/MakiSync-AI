@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -32,7 +32,6 @@ export default function Navbar() {
     { label: 'WORK',     href: '#selected-work' },
     { label: 'SERVICES', href: '#approach' },
     { label: 'ABOUT',    href: '#about' },
-    { label: 'GALLERY',  href: '#capabilities' },
     { label: 'CONTACT',  href: '#contact' },
   ];
 
