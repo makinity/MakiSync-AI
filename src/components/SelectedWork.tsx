@@ -39,6 +39,10 @@ export default function SelectedWork({ projects, categories: initialCategories }
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [modalProject, setModalProject] = useState<Video | null>(null);
+  const [isFloating, setIsFloating] = useState(false);
+
+  const sectionRef = useRef<HTMLElement>(null);
+  const staticBarRef = useRef<HTMLDivElement>(null);
   const gridTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,6 +54,32 @@ export default function SelectedWork({ projects, categories: initialCategories }
       });
     }
   }, [initialCategories]);
+
+  // Track scroll position: float the category bar strictly within #selected-work section
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!sectionRef.current || !staticBarRef.current) return;
+      const sectionRect = sectionRef.current.getBoundingClientRect();
+      const staticBarRect = staticBarRef.current.getBoundingClientRect();
+
+      // Floating category bar appears only when:
+      // 1. Static category bar has scrolled under/past the top navbar (bottom <= 74)
+      // 2. The visitor is still browsing within the #selected-work section (bottom >= 220)
+      const passedStatic = staticBarRect.bottom <= 74;
+      const stillInSection = sectionRect.bottom >= 220;
+
+      setIsFloating(passedStatic && stillInSection);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, []);
 
   // Sort categories according to preferred display order
   const sortedCategories = [...categories].sort((a, b) => {
@@ -88,18 +118,98 @@ export default function SelectedWork({ projects, categories: initialCategories }
   const handleCategoryChange = (catId: string) => {
     setSelectedCategory(catId);
 
-    // If visitor has scrolled down into the grid, smoothly scroll back to top of the video grid
+    // If visitor has scrolled down into the grid, smoothly glide back to the top of the video grid
     if (gridTopRef.current) {
       const rect = gridTopRef.current.getBoundingClientRect();
-      if (rect.top < 140) {
-        gridTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (rect.top < 130 || isFloating) {
+        const targetY = window.scrollY + rect.top - 130;
+        window.scrollTo({
+          top: Math.max(0, targetY),
+          behavior: 'smooth',
+        });
       }
     }
   };
 
+  const renderCategoryTabs = (isFloatingBar = false) => (
+    <div
+      className="category-pill-container no-scrollbar"
+      style={{
+        pointerEvents: 'auto',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: isFloatingBar ? '5px 8px' : '6px 8px',
+        borderRadius: 999,
+        background: 'var(--nav-bg, rgba(10, 15, 26, 0.9))',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid var(--admin-border)',
+        boxShadow: isFloatingBar
+          ? '0 12px 36px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(59, 130, 246, 0.14)'
+          : '0 4px 20px rgba(0, 0, 0, 0.06)',
+        maxWidth: '100%',
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch',
+      }}
+    >
+      {filterTabs.map((cat) => {
+        const active = selectedCategory === cat.id;
+        return (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => handleCategoryChange(cat.id)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              padding: isFloatingBar ? '0.45rem 1rem' : '0.55rem 1.1rem',
+              borderRadius: 999,
+              fontSize: isFloatingBar ? '0.75rem' : '0.78rem',
+              fontWeight: 700,
+              letterSpacing: '0.02em',
+              border: 'none',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              transition: 'all 0.2s ease',
+              background: active
+                ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+                : 'transparent',
+              color: active ? '#ffffff' : 'var(--admin-text-secondary)',
+              boxShadow: active
+                ? '0 4px 16px rgba(59, 130, 246, 0.4)'
+                : 'none',
+            }}
+            onMouseEnter={(e) => {
+              if (!active) {
+                e.currentTarget.style.background = 'var(--admin-bg-secondary)';
+                e.currentTarget.style.color = 'var(--admin-text-primary)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!active) {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--admin-text-secondary)';
+              }
+            }}
+          >
+            <i
+              className={`bi ${cat.icon}`}
+              style={{ fontSize: '0.8rem', color: active ? '#ffffff' : 'var(--admin-accent)' }}
+            />
+            <span>{cat.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <section
       id="selected-work"
+      ref={sectionRef}
       style={{
         padding: '5rem 0 6rem',
         background: 'var(--admin-bg-primary)',
@@ -108,6 +218,26 @@ export default function SelectedWork({ projects, categories: initialCategories }
         overflowY: 'visible',
       }}
     >
+      {/* Floating Category Filter Bar (Fixed below Navbar strictly while inside #selected-work) */}
+      <div
+        className="floating-category-layer"
+        style={{
+          position: 'fixed',
+          top: 68,
+          left: '50%',
+          transform: isFloating ? 'translate(-50%, 0)' : 'translate(-50%, -18px)',
+          opacity: isFloating ? 1 : 0,
+          pointerEvents: isFloating ? 'auto' : 'none',
+          zIndex: 9000,
+          transition: 'opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+          maxWidth: 'calc(100vw - 24px)',
+          display: 'flex',
+          justifyContent: 'center',
+        }}
+      >
+        {renderCategoryTabs(true)}
+      </div>
+
       <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 2rem' }}>
 
         {/* Section Header */}
@@ -136,92 +266,21 @@ export default function SelectedWork({ projects, categories: initialCategories }
           </h2>
         </div>
 
-        {/* Sticky Floating Category Filter Bar (Confined strictly to #selected-work section) */}
+        {/* Static Category Filter Bar under header */}
         <div
-          className="sticky-category-wrapper"
+          ref={staticBarRef}
           style={{
-            position: 'sticky',
-            top: 76,
-            zIndex: 40,
-            padding: '8px 0 16px',
-            marginBottom: '1.5rem',
+            padding: '8px 0 20px',
+            marginBottom: '1rem',
             display: 'flex',
             justifyContent: 'center',
-            pointerEvents: 'none',
           }}
         >
-          <div
-            className="sticky-category-pill"
-            style={{
-              pointerEvents: 'auto',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 8px',
-              borderRadius: 20,
-              background: 'var(--nav-bg, rgba(10, 15, 26, 0.9))',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid var(--admin-border)',
-              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(59, 130, 246, 0.12)',
-              maxWidth: '100%',
-              overflowX: 'auto',
-              WebkitOverflowScrolling: 'touch',
-              scrollbarWidth: 'none',
-            }}
-          >
-            {filterTabs.map((cat) => {
-              const active = selectedCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => handleCategoryChange(cat.id)}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 7,
-                    padding: '0.55rem 1.1rem',
-                    borderRadius: 12,
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.02em',
-                    border: 'none',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    transition: 'all 0.2s ease',
-                    background: active 
-                      ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' 
-                      : 'transparent',
-                    color: active ? '#ffffff' : 'var(--admin-text-secondary)',
-                    boxShadow: active 
-                      ? '0 4px 16px rgba(59, 130, 246, 0.4)' 
-                      : 'none',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) {
-                      e.currentTarget.style.background = 'var(--admin-bg-secondary)';
-                      e.currentTarget.style.color = 'var(--admin-text-primary)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = 'var(--admin-text-secondary)';
-                    }
-                  }}
-                >
-                  <i className={`bi ${cat.icon}`} style={{ fontSize: '0.8rem', color: active ? '#ffffff' : 'var(--admin-accent)' }} />
-                  <span>{cat.label}</span>
-                </button>
-              );
-            })}
-          </div>
+          {renderCategoryTabs(false)}
         </div>
 
         {/* Scroll anchor target for smooth glide back to top of grid */}
-        <div ref={gridTopRef} style={{ scrollMarginTop: 160 }} />
+        <div ref={gridTopRef} />
 
         {/* 3-COLUMN VIDEO GRID OR EMPTY STATE */}
         {displayProjects.length === 0 ? (
@@ -545,8 +604,8 @@ export default function SelectedWork({ projects, categories: initialCategories }
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 1.5rem !important;
           }
-          .sticky-category-wrapper {
-            top: 68px !important;
+          .floating-category-layer {
+            top: 64px !important;
           }
         }
         @media (max-width: 640px) {
@@ -554,8 +613,8 @@ export default function SelectedWork({ projects, categories: initialCategories }
             grid-template-columns: 1fr !important;
             gap: 1.25rem !important;
           }
-          .sticky-category-wrapper {
-            top: 64px !important;
+          .floating-category-layer {
+            top: 58px !important;
           }
         }
       `}</style>
