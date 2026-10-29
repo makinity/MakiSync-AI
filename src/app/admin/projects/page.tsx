@@ -5,16 +5,17 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AppLayout from '@/layouts/AppLayout';
 import ConfirmModal from '@/components/ConfirmModal';
-import { Project } from '@/types/database';
+import { Project, Category } from '@/types/database';
 import MediaThumbnail from '@/components/MediaThumbnail';
-import { getAllProjects, deleteProject } from '@/lib/supabase';
+import { getAllProjects, deleteProject, getCategories } from '@/lib/supabase';
 
 export default function AdminProjectsPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'ALL' | 'UGC' | 'VSL'>('ALL');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   // Delete Confirm Modal state
@@ -23,6 +24,7 @@ export default function AdminProjectsPage() {
 
   useEffect(() => {
     loadProjects();
+    getCategories().then(c => { if (c) setCategories(c); });
   }, []);
 
   async function loadProjects() {
@@ -39,7 +41,9 @@ export default function AdminProjectsPage() {
       (p.description || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     const catName = (p.category?.name || (p.format === '16:9' ? 'VSL' : 'UGC')).toUpperCase();
-    const matchesCategory = selectedCategory === 'ALL' || catName === selectedCategory;
+    const catSlug = (p.category?.slug || '').toUpperCase();
+    const catId = p.category_id || p.category?.id || '';
+    const matchesCategory = selectedCategory === 'ALL' || catName === selectedCategory || catSlug === selectedCategory || catId === selectedCategory;
 
     return matchesSearch && matchesCategory;
   });
@@ -186,7 +190,7 @@ export default function AdminProjectsPage() {
           </div>
 
           {/* Category Filter Tabs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: '0.5rem', borderTop: '1px solid var(--admin-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: '0.5rem', borderTop: '1px solid var(--admin-border)', overflowX: 'auto', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4 }}>
               Category Filter:
             </span>

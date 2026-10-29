@@ -11,21 +11,26 @@ import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 import DotCanvas from '@/components/DotCanvas';
 import MakiBot from '@/components/MakiBot';
-import { getPublishedProjects, getSiteSettings } from '@/lib/supabase';
+import { getPublishedProjects, getSiteSettings, getCategories } from '@/lib/supabase';
 import { INITIAL_PROJECTS, INITIAL_SITE_SETTINGS } from '@/lib/mockData';
-import { Project, SiteSettings } from '@/types/database';
+import { Project, SiteSettings, Category } from '@/types/database';
 
 export default function HomePage() {
   const [showreelOpen, setShowreelOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(INITIAL_SITE_SETTINGS);
 
   useEffect(() => {
     async function loadData() {
-      const p = await getPublishedProjects();
-      const s = await getSiteSettings();
+      const [p, s, c] = await Promise.all([
+        getPublishedProjects(),
+        getSiteSettings(),
+        getCategories(),
+      ]);
       if (p) setProjects(p);
       if (s) setSiteSettings(s);
+      if (c) setCategories(c);
     }
     loadData();
   }, []);
@@ -38,7 +43,7 @@ export default function HomePage() {
 
         <Hero onOpenShowreel={() => setShowreelOpen(true)} />
 
-        <SelectedWork projects={projects} />
+        <SelectedWork projects={projects} categories={categories} />
 
         <CreativeApproach />
 

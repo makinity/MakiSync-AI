@@ -4,23 +4,82 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { getVideoSource } from '@/lib/videoUtils';
 import ShowreelModal from './ShowreelModal';
-import { Video } from '@/types/database';
+import { Video, Category } from '@/types/database';
+import { getCategories } from '@/lib/supabase';
 import MediaThumbnail from '@/components/MediaThumbnail';
+
+const CATEGORY_ICONS: Record<string, string> = {
+  ALL: 'bi-grid-fill',
+  UGC: 'bi-phone-fill',
+  VSL: 'bi-play-btn-fill',
+  CLAYMATION: 'bi-palette-fill',
+  'IMAGE TO VIDEO': 'bi-stars',
+  'PIXAR 3D': 'bi-box-fill',
+  'REAL ESTATE': 'bi-buildings-fill',
+  'SKELETON ANIMATION': 'bi-person-walking',
+};
+
+const CATEGORY_ORDER = [
+  'UGC',
+  'VSL',
+  'CLAYMATION',
+  'IMAGE TO VIDEO',
+  'PIXAR 3D',
+  'REAL ESTATE',
+  'SKELETON ANIMATION',
+];
 
 interface SelectedWorkProps {
   projects: Video[];
+  categories?: Category[];
 }
 
-export default function SelectedWork({ projects }: SelectedWorkProps) {
-  const [selectedCategory, setSelectedCategory] = useState<'ALL' | 'UGC' | 'VSL'>('ALL');
+export default function SelectedWork({ projects, categories: initialCategories }: SelectedWorkProps) {
+  const [categories, setCategories] = useState<Category[]>(initialCategories || []);
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [modalProject, setModalProject] = useState<Video | null>(null);
 
+  useEffect(() => {
+    if (initialCategories && initialCategories.length > 0) {
+      setCategories(initialCategories);
+    } else {
+      getCategories().then((cats) => {
+        if (cats && cats.length > 0) setCategories(cats);
+      });
+    }
+  }, [initialCategories]);
+
+  // Sort categories according to preferred display order
+  const sortedCategories = [...categories].sort((a, b) => {
+    const idxA = CATEGORY_ORDER.indexOf(a.name.toUpperCase());
+    const idxB = CATEGORY_ORDER.indexOf(b.name.toUpperCase());
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const filterTabs = [
+    { id: 'ALL', label: 'All Projects', icon: CATEGORY_ICONS.ALL },
+    ...sortedCategories.map((c) => ({
+      id: c.name.toUpperCase(),
+      label: c.name,
+      icon: CATEGORY_ICONS[c.name.toUpperCase()] || 'bi-film',
+    })),
+  ];
+
   const filteredProjects = projects.filter((p: any) => {
     if (selectedCategory === 'ALL') return true;
-    const catName = p.category?.name || (p.format === '16:9' ? 'VSL' : 'UGC');
-    return catName.toUpperCase() === selectedCategory;
+    const catName = (p.category?.name || (p.format === '16:9' ? 'VSL' : 'UGC')).toUpperCase();
+    const catSlug = (p.category?.slug || '').toUpperCase();
+    const catId = p.category_id || p.category?.id || '';
+    return (
+      catName === selectedCategory ||
+      catSlug === selectedCategory ||
+      catId === selectedCategory
+    );
   });
 
   const displayProjects = filteredProjects.length > 0 ? filteredProjects : projects;
@@ -37,15 +96,15 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
   const handlePrev = useCallback(() => goTo(activeIndex - 1), [activeIndex, goTo]);
   const handleNext = useCallback(() => goTo(activeIndex + 1), [activeIndex, goTo]);
 
-  const handleCategoryChange = (cat: 'ALL' | 'UGC' | 'VSL') => {
-    setSelectedCategory(cat);
+  const handleCategoryChange = (catId: string) => {
+    setSelectedCategory(catId);
     setActiveIndex(0);
   };
 
   // Keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (modalProject) return; // don't swipe while modal is open
+      if (modalProject) return;
       if (e.key === 'ArrowLeft') handlePrev();
       if (e.key === 'ArrowRight') handleNext();
     };
@@ -73,7 +132,6 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
     }
     dragStartX.current = null;
     dragDelta.current = 0;
-    // Reset after a tick so onClick handlers can still read the flag
     setTimeout(() => { isDragging.current = false; }, 10);
   };
 
@@ -100,7 +158,7 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
               background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)',
             }}>
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--admin-accent)' }} />
-              AI ADS UGC Creator
+              AI Commercial Director &amp; Animator
             </div>
             <h2 style={{
               fontSize: 'clamp(2rem, 4.5vw, 3rem)', fontWeight: 900,
@@ -116,40 +174,42 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
             </h2>
           </div>
 
-          {/* Category Filter Tabs */}
+          {/* Dynamic Category Filter Tabs (Scrollable Bar) */}
           <div style={{
-            display: 'inline-flex',
+            display: 'flex',
             alignItems: 'center',
             gap: 6,
-            padding: '5px',
-            borderRadius: 14,
+            padding: '6px',
+            borderRadius: 16,
             background: 'var(--admin-card)',
             backdropFilter: 'blur(12px)',
             border: '1px solid var(--admin-border)',
             boxShadow: 'var(--admin-shadow)',
+            maxWidth: '100%',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
           }}>
-            {[
-              { id: 'ALL', label: 'All Projects', icon: 'bi-grid-fill' },
-              { id: 'UGC', label: 'UGC Social Ads', icon: 'bi-phone-fill' },
-              { id: 'VSL', label: 'VSL Commercials', icon: 'bi-play-btn-fill' },
-            ].map((cat) => {
+            {filterTabs.map((cat) => {
               const active = selectedCategory === cat.id;
               return (
                 <button
                   key={cat.id}
                   type="button"
-                  onClick={() => handleCategoryChange(cat.id as any)}
+                  onClick={() => handleCategoryChange(cat.id)}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 7,
-                    padding: '0.55rem 1.15rem',
-                    borderRadius: 10,
+                    padding: '0.55rem 1.1rem',
+                    borderRadius: 11,
                     fontSize: '0.78rem',
                     fontWeight: 700,
                     letterSpacing: '0.02em',
                     border: 'none',
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
                     transition: 'all 0.2s ease',
                     background: active 
                       ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' 
@@ -199,6 +259,7 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
 
             const heroSource = getVideoSource(project.video_url || project.hero_video_url || '');
             const isHovered = hoveredId === project.id;
+            const catName = project.category?.name || (project.format === '16:9' ? 'VSL' : 'UGC');
 
             const translateX = offset * 68;
             const scale = isActive ? 1 : Math.max(0.78, 1 - Math.abs(offset) * 0.1);
@@ -275,8 +336,19 @@ export default function SelectedWork({ projects }: SelectedWorkProps) {
                     )
                   )}
 
-                  {/* Format badge */}
-                  <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }}>
+                  {/* Badges: Category & Format */}
+                  <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 2, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {catName && (
+                      <span style={{
+                        padding: '3px 8px', borderRadius: 5, fontSize: '0.65rem', fontWeight: 700,
+                        background: 'linear-gradient(135deg, rgba(59,130,246,0.9) 0%, rgba(37,99,235,0.9) 100%)',
+                        color: '#ffffff',
+                        backdropFilter: 'blur(6px)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                      }}>
+                        {catName}
+                      </span>
+                    )}
                     <span style={{
                       padding: '3px 8px', borderRadius: 5, fontSize: '0.65rem', fontWeight: 600,
                       background: 'rgba(0,0,0,0.8)', color: 'var(--admin-accent)',
