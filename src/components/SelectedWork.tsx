@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getVideoSource } from '@/lib/videoUtils';
 import ShowreelModal from './ShowreelModal';
@@ -37,7 +37,6 @@ interface SelectedWorkProps {
 export default function SelectedWork({ projects, categories: initialCategories }: SelectedWorkProps) {
   const [categories, setCategories] = useState<Category[]>(initialCategories || []);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [modalProject, setModalProject] = useState<Video | null>(null);
 
@@ -95,64 +94,10 @@ export default function SelectedWork({ projects, categories: initialCategories }
     );
   });
 
-  // Strict filtering: never dump all projects when a category has 0 items!
   const displayProjects = filteredProjects;
-
-  // Drag / swipe state
-  const dragStartX = useRef<number | null>(null);
-  const dragDelta = useRef(0);
-  const isDragging = useRef(false);
-
-  const goTo = useCallback((index: number) => {
-    if (displayProjects.length === 0) return;
-    setActiveIndex(Math.max(0, Math.min(index, displayProjects.length - 1)));
-  }, [displayProjects.length]);
-
-  const handlePrev = useCallback(() => goTo(activeIndex - 1), [activeIndex, goTo]);
-  const handleNext = useCallback(() => goTo(activeIndex + 1), [activeIndex, goTo]);
 
   const handleCategoryChange = (catId: string) => {
     setSelectedCategory(catId);
-    setActiveIndex(0);
-  };
-
-  // Keyboard navigation
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (modalProject || displayProjects.length === 0) return;
-      if (e.key === 'ArrowLeft') handlePrev();
-      if (e.key === 'ArrowRight') handleNext();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [handlePrev, handleNext, modalProject, displayProjects.length]);
-
-  // Pointer drag handlers
-  const onPointerDown = (e: React.PointerEvent) => {
-    dragStartX.current = e.clientX;
-    dragDelta.current = 0;
-    isDragging.current = false;
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (dragStartX.current === null) return;
-    dragDelta.current = e.clientX - dragStartX.current;
-    if (Math.abs(dragDelta.current) > 8) isDragging.current = true;
-  };
-
-  const onPointerUp = (e: React.PointerEvent) => {
-    if (isDragging.current) {
-      if (dragDelta.current < -50) handleNext();
-      else if (dragDelta.current > 50) handlePrev();
-    }
-    dragStartX.current = null;
-    dragDelta.current = 0;
-    setTimeout(() => { isDragging.current = false; }, 10);
-  };
-
-  const handleCardClick = (project: Video, e: React.MouseEvent) => {
-    if (isDragging.current) return;
-    setModalProject(project);
   };
 
   return (
@@ -160,10 +105,10 @@ export default function SelectedWork({ projects, categories: initialCategories }
       id="selected-work"
       style={{ padding: '6rem 0', background: 'var(--admin-bg-primary)', position: 'relative', overflow: 'hidden' }}
     >
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem' }}>
+      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 2rem' }}>
 
-        {/* Header & Filter Tabs */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2.5rem', flexWrap: 'wrap', gap: 16 }}>
+        {/* Section Header & Dynamic Filter Tabs */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '3rem', flexWrap: 'wrap', gap: 20 }}>
           <div>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -189,7 +134,7 @@ export default function SelectedWork({ projects, categories: initialCategories }
             </h2>
           </div>
 
-          {/* Dynamic Category Filter Tabs (Scrollable Bar) */}
+          {/* Category Filter Tabs (Scrollable pill bar) */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -254,351 +199,306 @@ export default function SelectedWork({ projects, categories: initialCategories }
             })}
           </div>
         </div>
-      </div>
 
-      {/* Main Content Area: Empty State or Carousel */}
-      {displayProjects.length === 0 ? (
-        <div style={{
-          maxWidth: 480,
-          margin: '2rem auto 4rem',
-          padding: '3rem 2rem',
-          borderRadius: 22,
-          background: 'var(--admin-card)',
-          border: '1px dashed var(--admin-border)',
-          textAlign: 'center',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 14,
-          boxShadow: 'var(--admin-shadow)',
-        }}>
+        {/* 3-COLUMN VIDEO GRID OR EMPTY STATE */}
+        {displayProjects.length === 0 ? (
           <div style={{
-            width: 52,
-            height: 52,
-            borderRadius: '50%',
-            background: 'rgba(59,130,246,0.1)',
-            color: '#60a5fa',
+            maxWidth: 480,
+            margin: '2rem auto 4rem',
+            padding: '3.5rem 2rem',
+            borderRadius: 22,
+            background: 'var(--admin-card)',
+            border: '1px dashed var(--admin-border)',
+            textAlign: 'center',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.5rem',
+            gap: 14,
+            boxShadow: 'var(--admin-shadow)',
           }}>
-            <i className={`bi ${CATEGORY_ICONS[selectedCategory] || 'bi-film'}`} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--admin-text-primary)', margin: 0 }}>
-              No {filterTabs.find(t => t.id === selectedCategory)?.label || selectedCategory} Videos Yet
-            </h3>
-            <p style={{ fontSize: '0.82rem', color: 'var(--admin-text-muted)', marginTop: 6, marginBottom: 0, lineHeight: 1.5 }}>
-              Projects for this category haven't been uploaded yet. Check back soon or view all work!
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => handleCategoryChange('ALL')}
-            style={{
-              marginTop: 4,
-              padding: '0.55rem 1.25rem',
-              borderRadius: 10,
-              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-              color: '#ffffff',
-              border: 'none',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'inline-flex',
+            <div style={{
+              width: 52,
+              height: 52,
+              borderRadius: '50%',
+              background: 'rgba(59,130,246,0.1)',
+              color: '#60a5fa',
+              display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              boxShadow: '0 4px 14px rgba(59,130,246,0.35)',
-            }}
-          >
-            <i className="bi bi-grid-fill" /> View All Projects
-          </button>
-        </div>
-      ) : (
-        <>
-          {/* Carousel Stage */}
-          <div
-            className="carousel-stage"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-            style={{ position: 'relative', cursor: 'grab', userSelect: 'none' }}
-          >
-            <div className="carousel-track">
-              {displayProjects.map((project, index) => {
-                const offset = index - activeIndex;
-                const isActive = offset === 0;
-                const isVisible = Math.abs(offset) <= 2;
-                if (!isVisible) return null;
+              justifyContent: 'center',
+              fontSize: '1.5rem',
+            }}>
+              <i className={`bi ${CATEGORY_ICONS[selectedCategory] || 'bi-film'}`} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--admin-text-primary)', margin: 0 }}>
+                No {filterTabs.find(t => t.id === selectedCategory)?.label || selectedCategory} Videos Yet
+              </h3>
+              <p style={{ fontSize: '0.82rem', color: 'var(--admin-text-muted)', marginTop: 6, marginBottom: 0, lineHeight: 1.5 }}>
+                Projects for this category haven't been uploaded yet. Check back soon or view all work!
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCategoryChange('ALL')}
+              style={{
+                marginTop: 4,
+                padding: '0.55rem 1.25rem',
+                borderRadius: 10,
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                color: '#ffffff',
+                border: 'none',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 4px 14px rgba(59,130,246,0.35)',
+              }}
+            >
+              <i className="bi bi-grid-fill" /> View All Projects
+            </button>
+          </div>
+        ) : (
+          <div className="three-column-grid">
+            {displayProjects.map((project) => {
+              const heroSource = getVideoSource(project.video_url || project.hero_video_url || '');
+              const isHovered = hoveredId === project.id;
+              const catName = project.category?.name || (project.format === '16:9' ? 'VSL' : 'UGC');
+              const isNineSixteen = project.format !== '16:9';
 
-                const heroSource = getVideoSource(project.video_url || project.hero_video_url || '');
-                const isHovered = hoveredId === project.id;
-                const catName = project.category?.name || (project.format === '16:9' ? 'VSL' : 'UGC');
-
-                const translateX = offset * 68;
-                const scale = isActive ? 1 : Math.max(0.78, 1 - Math.abs(offset) * 0.1);
-                const opacity = isActive ? 1 : Math.max(0.45, 1 - Math.abs(offset) * 0.3);
-                const zIndex = 10 - Math.abs(offset);
-
-                return (
+              return (
+                <div
+                  key={project.id}
+                  className="project-card"
+                  onClick={() => setModalProject(project)}
+                  onMouseEnter={() => setHoveredId(project.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  style={{
+                    borderRadius: 22,
+                    overflow: 'hidden',
+                    background: 'var(--admin-card)',
+                    border: '1px solid var(--admin-border)',
+                    boxShadow: isHovered
+                      ? '0 20px 40px rgba(59,130,246,0.18)'
+                      : '0 8px 24px rgba(0,0,0,0.22)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.3s ease',
+                    transform: isHovered ? 'translateY(-6px)' : 'translateY(0)',
+                    borderColor: isHovered ? 'rgba(59,130,246,0.5)' : 'var(--admin-border)',
+                  }}
+                >
+                  {/* 9:16 Video Container Holder */}
                   <div
-                    key={project.id}
-                    className="carousel-card"
-                    onClick={(e) => isActive && handleCardClick(project, e)}
-                    onMouseEnter={() => isActive && setHoveredId(project.id)}
-                    onMouseLeave={() => setHoveredId(null)}
                     style={{
-                      position: 'absolute',
-                      left: '50%',
-                      top: 0,
-                      width: 'min(520px, 82vw)',
-                      transform: `translateX(calc(-50% + ${translateX}%)) scale(${scale})`,
-                      opacity,
-                      zIndex,
-                      transition: 'transform 0.45s cubic-bezier(0.35,0.9,0.4,1), opacity 0.45s ease',
-                      cursor: isActive ? 'pointer' : 'default',
-                      borderRadius: 20,
+                      position: 'relative',
+                      width: '100%',
+                      aspectRatio: isNineSixteen ? '9/16' : '16/9',
+                      background: '#050810',
                       overflow: 'hidden',
-                      background: 'var(--admin-card)',
-                      border: `1px solid ${isActive ? 'rgba(59,130,246,0.35)' : 'var(--admin-border)'}`,
-                      boxShadow: isActive ? '0 24px 60px rgba(0,0,0,0.4)' : '0 8px 24px rgba(0,0,0,0.2)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      pointerEvents: isActive ? 'auto' : 'none',
                     }}
                   >
-                    {/* Video / Thumbnail */}
-                    <div style={{ position: 'relative', aspectRatio: '16/9', background: '#050810', overflow: 'hidden', flexShrink: 0 }}>
-                      <MediaThumbnail
-                        src={project.thumbnail_url}
-                        videoFallbackUrl={project.video_url || project.hero_video_url}
-                        alt={project.title}
-                        draggable={false}
-                        style={{
-                          transition: 'transform 0.5s, opacity 0.3s',
-                          transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-                          opacity: isHovered ? 0.15 : 1,
-                        }}
-                      />
+                    <MediaThumbnail
+                      src={project.thumbnail_url}
+                      videoFallbackUrl={project.video_url || project.hero_video_url}
+                      alt={project.title}
+                      draggable={false}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.4s ease, opacity 0.3s ease',
+                        transform: isHovered ? 'scale(1.04)' : 'scale(1)',
+                        opacity: isHovered ? 0.2 : 1,
+                      }}
+                    />
 
-                      {/* Inline preview on hover (silent loop) */}
-                      {isHovered && isActive && (
-                        heroSource.isIframe ? (
-                          <>
-                            <iframe
-                              src={heroSource.embedUrl}
-                              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
-                              title={project.title}
-                            />
-                            <div style={{
-                              position: 'absolute', top: 0, right: 0,
-                              width: 80, height: 56,
-                              background: 'rgba(0,0,0,0.75)',
-                              zIndex: 10,
-                              pointerEvents: 'all',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            }}>
-                              <img src="/logo.png" alt="Logo" style={{ height: 28, width: 'auto', objectFit: 'contain', opacity: 0.9 }} />
-                            </div>
-                          </>
-                        ) : (
-                          <video
-                            src={heroSource.directUrl || project.hero_video_url}
-                            autoPlay loop muted playsInline preload="metadata"
-                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                    {/* Inline silent video preview on hover */}
+                    {isHovered && (
+                      heroSource.isIframe ? (
+                        <>
+                          <iframe
+                            src={heroSource.embedUrl}
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+                            title={project.title}
                           />
-                        )
-                      )}
-
-                      {/* Badges: Category & Format */}
-                      <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 2, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {catName && (
-                          <span style={{
-                            padding: '3px 8px', borderRadius: 5, fontSize: '0.65rem', fontWeight: 700,
-                            background: 'linear-gradient(135deg, rgba(59,130,246,0.9) 0%, rgba(37,99,235,0.9) 100%)',
-                            color: '#ffffff',
-                            backdropFilter: 'blur(6px)',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                          <div style={{
+                            position: 'absolute', top: 0, right: 0,
+                            width: 70, height: 48,
+                            background: 'rgba(0,0,0,0.75)',
+                            zIndex: 10,
+                            pointerEvents: 'all',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>
-                            {catName}
-                          </span>
-                        )}
-                        <span style={{
-                          padding: '3px 8px', borderRadius: 5, fontSize: '0.65rem', fontWeight: 600,
-                          background: 'rgba(0,0,0,0.8)', color: 'var(--admin-accent)',
-                          border: '1px solid rgba(59,130,246,0.3)',
-                        }}>
-                          {project.format}
-                        </span>
-                      </div>
+                            <img src="/logo.png" alt="Logo" style={{ height: 22, width: 'auto', objectFit: 'contain', opacity: 0.9 }} />
+                          </div>
+                        </>
+                      ) : (
+                        <video
+                          src={heroSource.directUrl || project.hero_video_url}
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          preload="metadata"
+                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      )
+                    )}
 
-                      {/* Duration badge */}
+                    {/* Badges: Category & Format */}
+                    <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 2, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {catName && (
+                        <span style={{
+                          padding: '4px 9px', borderRadius: 6, fontSize: '0.68rem', fontWeight: 700,
+                          background: 'linear-gradient(135deg, rgba(59,130,246,0.92) 0%, rgba(37,99,235,0.92) 100%)',
+                          color: '#ffffff',
+                          backdropFilter: 'blur(8px)',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
+                        }}>
+                          {catName}
+                        </span>
+                      )}
+                      <span style={{
+                        padding: '4px 9px', borderRadius: 6, fontSize: '0.65rem', fontWeight: 700,
+                        background: 'rgba(0,0,0,0.75)', color: '#60a5fa',
+                        border: '1px solid rgba(59,130,246,0.3)',
+                        backdropFilter: 'blur(8px)',
+                      }}>
+                        {project.format || '9:16'}
+                      </span>
+                    </div>
+
+                    {/* Duration badge */}
+                    {project.duration && (
                       <div style={{
-                        position: 'absolute', bottom: 10, right: 10, zIndex: 2,
+                        position: 'absolute', bottom: 12, right: 12, zIndex: 2,
                         display: 'flex', alignItems: 'center', gap: 4,
-                        padding: '3px 8px', borderRadius: 5,
-                        background: 'rgba(0,0,0,0.8)',
-                        fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)',
+                        padding: '3px 8px', borderRadius: 6,
+                        background: 'rgba(0,0,0,0.75)',
+                        fontSize: '0.65rem', color: 'rgba(255,255,255,0.85)',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        backdropFilter: 'blur(6px)',
                       }}>
                         <i className="bi bi-clock" style={{ color: 'var(--admin-accent)', fontSize: 10 }} />
                         {project.duration}
                       </div>
+                    )}
 
-                      {/* Play button overlay — always visible on active card */}
-                      {isActive && (
-                        <div
-                          onClick={(e) => { e.stopPropagation(); setModalProject(project); }}
-                          style={{
-                            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            zIndex: 5, cursor: 'pointer',
-                            opacity: isHovered ? 0 : 1,
-                            transition: 'opacity 0.2s',
-                          }}>
-                          <div style={{
-                            width: 56, height: 56, borderRadius: '50%',
-                            background: 'rgba(59,130,246,0.88)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '0 4px 24px rgba(59,130,246,0.55)',
-                          }}>
-                            <i className="bi bi-play-fill" style={{ color: '#fff', fontSize: 22, marginLeft: 3 }} />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Card Content */}
-                    <div style={{ padding: 'clamp(1rem, 4vw, 1.5rem)', flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <div>
-                        {project.client_spec && (
-                          <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--admin-accent)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                            {project.client_spec}
-                          </p>
-                        )}
-                        <h3 style={{ fontSize: 'clamp(0.95rem, 2.5vw, 1.05rem)', fontWeight: 700, color: 'var(--admin-text-primary)', margin: 0, lineHeight: 1.35 }}>
-                          {project.title}
-                        </h3>
-                        <p style={{
-                          fontSize: '0.8rem', color: 'var(--admin-text-secondary)', marginTop: 8, lineHeight: 1.65,
-                          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden',
-                        }}>
-                          {project.description}
-                        </p>
-                      </div>
-
-                      <div style={{
-                        paddingTop: 12, borderTop: '1px solid var(--admin-border)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        gap: 8, flexWrap: 'wrap',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                          {(project.tools_used || []).slice(0, 2).map((t, idx) => (
-                            <span key={idx} style={{
-                              fontSize: '0.65rem', padding: '2px 8px', borderRadius: 5,
-                              background: 'var(--admin-bg-secondary)',
-                              color: 'var(--admin-text-muted)',
-                              border: '1px solid var(--admin-border)',
-                              fontWeight: 500, whiteSpace: 'nowrap',
-                            }}>
-                              {t}
-                            </span>
-                          ))}
-                          {(project.tools_used || []).length > 2 && (
-                            <span style={{ fontSize: '0.65rem', color: 'var(--admin-text-muted)', whiteSpace: 'nowrap' }}>
-                              +{(project.tools_used || []).length - 2}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* View Video — navigates to project page */}
-                        <Link
-                          href={`/projects/${project.slug}`}
-                          onClick={e => e.stopPropagation()}
-                          style={{
-                            fontSize: '0.78rem', fontWeight: 700,
-                            color: 'var(--admin-accent)', textDecoration: 'none',
-                            display: 'inline-flex', alignItems: 'center', gap: 4,
-                            transition: 'color 0.2s', whiteSpace: 'nowrap',
-                            position: 'relative', zIndex: 20,
-                          }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--admin-text-primary)'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--admin-accent)'; }}
-                        >
-                          View Video <i className="bi bi-arrow-up-right" style={{ fontSize: '0.65rem' }} />
-                        </Link>
+                    {/* Center Play Button Overlay */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 3,
+                        pointerEvents: 'none',
+                        opacity: isHovered ? 0 : 0.9,
+                        transition: 'opacity 0.25s ease',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 52,
+                          height: 52,
+                          borderRadius: '50%',
+                          background: 'rgba(59,130,246,0.9)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 8px 24px rgba(59,130,246,0.5)',
+                          border: '2px solid rgba(255,255,255,0.35)',
+                        }}
+                      >
+                        <i className="bi bi-play-fill" style={{ color: '#fff', fontSize: 24, marginLeft: 3 }} />
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
 
-            {/* Spacer so section has height */}
-            <div style={{ height: 'calc(min(520px, 82vw) * 9/16 + 210px)', pointerEvents: 'none' }} />
+                  {/* Card Content & Details */}
+                  <div style={{ padding: '1.25rem 1.4rem', display: 'flex', flexDirection: 'column', gap: 10, flex: 1, justifyContent: 'space-between' }}>
+                    <div>
+                      {project.client_spec && (
+                        <p style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--admin-accent)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          {project.client_spec}
+                        </p>
+                      )}
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--admin-text-primary)', margin: 0, lineHeight: 1.3 }}>
+                        {project.title}
+                      </h3>
+                      {project.description && (
+                        <p style={{
+                          fontSize: '0.8rem', color: 'var(--admin-text-secondary)', marginTop: 8, lineHeight: 1.55,
+                          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                        }}>
+                          {project.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div style={{
+                      paddingTop: 10,
+                      borderTop: '1px solid var(--admin-border)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 8,
+                      flexWrap: 'wrap',
+                    }}>
+                      {/* Tools tags */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        {(project.tools_used || []).slice(0, 2).map((t, idx) => (
+                          <span key={idx} style={{
+                            fontSize: '0.65rem', padding: '2px 8px', borderRadius: 6,
+                            background: 'var(--admin-bg-secondary)',
+                            color: 'var(--admin-text-muted)',
+                            border: '1px solid var(--admin-border)',
+                            fontWeight: 600, whiteSpace: 'nowrap',
+                          }}>
+                            {t}
+                          </span>
+                        ))}
+                        {(project.tools_used || []).length > 2 && (
+                          <span style={{ fontSize: '0.65rem', color: 'var(--admin-text-muted)', whiteSpace: 'nowrap' }}>
+                            +{(project.tools_used || []).length - 2}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* View Video link */}
+                      <Link
+                        href={`/projects/${project.slug}`}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          color: 'var(--admin-accent)',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          transition: 'color 0.2s',
+                          whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#ffffff'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--admin-accent)'; }}
+                      >
+                        View Video <i className="bi bi-arrow-up-right" style={{ fontSize: '0.68rem' }} />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
+        )}
+      </div>
 
-          {/* Controls */}
-          <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, marginTop: '2rem' }}>
-
-              <button
-                onClick={handlePrev}
-                disabled={activeIndex === 0}
-                style={{
-                  width: 44, height: 44, borderRadius: '50%',
-                  background: activeIndex === 0 ? 'var(--admin-bg-secondary)' : 'var(--admin-card)',
-                  border: '1px solid var(--admin-border)',
-                  color: activeIndex === 0 ? 'var(--admin-text-muted)' : 'var(--admin-text-primary)',
-                  cursor: activeIndex === 0 ? 'not-allowed' : 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.2s', fontSize: 16,
-                }}
-              >
-                <i className="bi bi-chevron-left" />
-              </button>
-
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                {displayProjects.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => goTo(i)}
-                    style={{
-                      width: i === activeIndex ? 24 : 8,
-                      height: 8, borderRadius: 99,
-                      background: i === activeIndex ? 'var(--admin-accent)' : 'var(--admin-border)',
-                      border: 'none', cursor: 'pointer', padding: 0,
-                      transition: 'all 0.3s ease',
-                    }}
-                  />
-                ))}
-              </div>
-
-              <button
-                onClick={handleNext}
-                disabled={activeIndex === displayProjects.length - 1}
-                style={{
-                  width: 44, height: 44, borderRadius: '50%',
-                  background: activeIndex === displayProjects.length - 1 ? 'var(--admin-bg-secondary)' : 'var(--admin-card)',
-                  border: '1px solid var(--admin-border)',
-                  color: activeIndex === displayProjects.length - 1 ? 'var(--admin-text-muted)' : 'var(--admin-text-primary)',
-                  cursor: activeIndex === displayProjects.length - 1 ? 'not-allowed' : 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.2s', fontSize: 16,
-                }}
-              >
-                <i className="bi bi-chevron-right" />
-              </button>
-            </div>
-
-            <p style={{ textAlign: 'center', marginTop: 12, fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>
-              {activeIndex + 1} / {displayProjects.length}
-            </p>
-          </div>
-        </>
-      )}
-
-      {/* Video Modal */}
+      {/* Video Modal Player */}
       {modalProject && (
         <ShowreelModal
           isOpen={!!modalProject}
@@ -609,10 +509,26 @@ export default function SelectedWork({ projects, categories: initialCategories }
         />
       )}
 
+      {/* Responsive 3-Column Grid CSS */}
       <style>{`
-        .carousel-stage { width: 100%; }
-        .carousel-track { position: relative; width: 100%; }
-        .carousel-stage:active { cursor: grabbing; }
+        .three-column-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 2rem;
+          width: 100%;
+        }
+        @media (max-width: 1080px) {
+          .three-column-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 1.5rem !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .three-column-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1.25rem !important;
+          }
+        }
       `}</style>
     </section>
   );
