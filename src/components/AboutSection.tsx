@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { motion } from 'framer-motion';
 
@@ -16,27 +16,30 @@ export default function AboutSection() {
         {/* Section Header */}
         <div style={{ textAlign: 'center', maxWidth: 680, margin: '0 auto 3.5rem' }}>
           <div style={{
-            fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.14em',
-            textTransform: 'uppercase', color: 'var(--admin-text-muted)', marginBottom: 12,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.12em',
+            textTransform: 'uppercase', color: 'var(--admin-accent)',
+            marginBottom: 12, padding: '4px 12px', borderRadius: 99,
+            background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)',
           }}>
-            About the Creator
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--admin-accent)' }} />
+            Background &amp; Philosophy
           </div>
           <motion.h2
             initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }} transition={{ duration: 0.5 }}
             style={{
-              fontSize: 'clamp(2.2rem, 5vw, 3.5rem)', fontWeight: 900,
+              fontSize: 'clamp(2.2rem, 5vw, 3.4rem)', fontWeight: 900,
               color: 'var(--admin-text-primary)', letterSpacing: '-0.03em',
               margin: '0 0 12px', lineHeight: 1.15,
             }}
           >
-            The Triple Threat:{' '}
+            About{' '}
             <span style={{
               background: 'var(--heading-gradient)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-              display: 'block',
             }}>
-              AI Video + Web Dev + Social Ads
+              The Creator
             </span>
           </motion.h2>
         </div>
