@@ -63,10 +63,10 @@ export default function SelectedWork({ projects, categories: initialCategories }
       const staticBarRect = staticBarRef.current.getBoundingClientRect();
 
       // Floating category bar appears only when:
-      // 1. Static category bar has scrolled under/past the top navbar (bottom <= 74)
-      // 2. The visitor is still browsing within the #selected-work section (bottom >= 220)
-      const passedStatic = staticBarRect.bottom <= 74;
-      const stillInSection = sectionRect.bottom >= 220;
+      // 1. Static category bar has scrolled under/past the top navbar
+      // 2. The visitor is still browsing within the #selected-work section
+      const passedStatic = staticBarRect.bottom <= 88;
+      const stillInSection = sectionRect.bottom >= 240;
 
       setIsFloating(passedStatic && stillInSection);
     };
@@ -121,8 +121,10 @@ export default function SelectedWork({ projects, categories: initialCategories }
     // If visitor has scrolled down into the grid, smoothly glide back to the top of the video grid
     if (gridTopRef.current) {
       const rect = gridTopRef.current.getBoundingClientRect();
-      if (rect.top < 130 || isFloating) {
-        const targetY = window.scrollY + rect.top - 130;
+      // Floating bar is at top: 88, height ~46px => bottom is at ~134px.
+      // We want ~24px breathing room below floating bar, so target is ~158px.
+      if (rect.top < 158 || isFloating) {
+        const targetY = window.scrollY + rect.top - 158;
         window.scrollTo({
           top: Math.max(0, targetY),
           behavior: 'smooth',
@@ -223,7 +225,7 @@ export default function SelectedWork({ projects, categories: initialCategories }
         className="floating-category-layer"
         style={{
           position: 'fixed',
-          top: 68,
+          top: 88,
           left: '50%',
           transform: isFloating ? 'translate(-50%, 0)' : 'translate(-50%, -18px)',
           opacity: isFloating ? 1 : 0,
@@ -605,7 +607,7 @@ export default function SelectedWork({ projects, categories: initialCategories }
             gap: 1.5rem !important;
           }
           .floating-category-layer {
-            top: 64px !important;
+            top: 84px !important;
           }
         }
         @media (max-width: 640px) {
@@ -614,7 +616,7 @@ export default function SelectedWork({ projects, categories: initialCategories }
             gap: 1.25rem !important;
           }
           .floating-category-layer {
-            top: 58px !important;
+            top: 76px !important;
           }
         }
       `}</style>
