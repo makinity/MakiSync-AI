@@ -36,6 +36,7 @@ export default function Footer() {
           <nav style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
             {[
               { label: 'Work', href: '#selected-work' },
+              { label: 'Tools', href: '#tools' },
               { label: 'Services', href: '#approach' },
               { label: 'About', href: '#about' },
               { label: 'Contact', href: '#contact' },

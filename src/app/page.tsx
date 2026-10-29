@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import ShowreelModal from '@/components/ShowreelModal';
 import SelectedWork from '@/components/SelectedWork';
+import ToolsSection from '@/components/ToolsSection';
 import CreativeApproach from '@/components/CreativeApproach';
 import AboutSection from '@/components/AboutSection';
 import ContactSection from '@/components/ContactSection';
@@ -44,6 +45,8 @@ export default function HomePage() {
         <Hero onOpenShowreel={() => setShowreelOpen(true)} />
 
         <SelectedWork projects={projects} categories={categories} />
+
+        <ToolsSection />
 
         <CreativeApproach />
 

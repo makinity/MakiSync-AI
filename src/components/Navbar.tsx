@@ -30,6 +30,7 @@ export default function Navbar() {
 
   const links = [
     { label: 'WORK',     href: '#selected-work' },
+    { label: 'TOOLS',    href: '#tools' },
     { label: 'SERVICES', href: '#approach' },
     { label: 'ABOUT',    href: '#about' },
     { label: 'CONTACT',  href: '#contact' },
