@@ -69,15 +69,40 @@ export default function ContactSection() {
             {/* Contact items */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { icon: 'bi-envelope-fill', label: 'Direct Email', value: 'juntillakingmaki@gmail.com', href: 'mailto:juntillakingmaki@gmail.com' },
-                { icon: 'bi-globe', label: 'Brand Hub', value: 'MakiSync Digital Solutions', href: 'https://maki-sync.vercel.app/' },
+                {
+                  icon: 'bi-whatsapp',
+                  label: 'WhatsApp Direct',
+                  value: '+63 961 044 5390',
+                  href: 'https://wa.me/639610445390',
+                  color: '#25D366',
+                  bg: 'rgba(37, 211, 102, 0.1)',
+                  border: 'rgba(37, 211, 102, 0.25)',
+                },
+                {
+                  icon: 'bi-envelope-fill',
+                  label: 'Direct Email',
+                  value: 'juntillakingmaki@gmail.com',
+                  href: 'mailto:juntillakingmaki@gmail.com',
+                  color: 'var(--admin-accent)',
+                  bg: 'rgba(59,130,246,0.08)',
+                  border: 'rgba(59,130,246,0.2)',
+                },
+                {
+                  icon: 'bi-globe',
+                  label: 'Brand Hub',
+                  value: 'MakiSync Digital Solutions',
+                  href: 'https://maki-sync.vercel.app/',
+                  color: 'var(--admin-accent)',
+                  bg: 'rgba(59,130,246,0.08)',
+                  border: 'rgba(59,130,246,0.2)',
+                },
               ].map(item => (
                 <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
                     width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-                    background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)',
+                    background: item.bg, border: `1px solid ${item.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--admin-accent)', fontSize: 16,
+                    color: item.color, fontSize: 17,
                   }}>
                     <i className={`bi ${item.icon}`} />
                   </div>
@@ -86,7 +111,7 @@ export default function ContactSection() {
                     <a
                       href={item.href} target={item.href.startsWith('http') ? '_blank' : undefined} rel="noreferrer"
                       style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--admin-text-primary)', textDecoration: 'none', transition: 'color 0.2s' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--admin-accent)'; }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = item.color; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--admin-text-primary)'; }}
                     >
                       {item.value}
@@ -99,8 +124,9 @@ export default function ContactSection() {
             {/* Social links */}
             <div style={{ display: 'flex', gap: 10 }}>
               {[
-                { icon: 'bi-github', href: 'https://github.com/makinity', label: 'GitHub' },
-                { icon: 'bi-linkedin', href: 'https://www.linkedin.com/in/mark-vencent-juntilla-366328358/', label: 'LinkedIn' },
+                { icon: 'bi-whatsapp', href: 'https://wa.me/639610445390', label: 'WhatsApp', hoverColor: '#25D366' },
+                { icon: 'bi-github', href: 'https://github.com/makinity', label: 'GitHub', hoverColor: 'var(--admin-accent)' },
+                { icon: 'bi-linkedin', href: 'https://www.linkedin.com/in/mark-vencent-juntilla-366328358/', label: 'LinkedIn', hoverColor: 'var(--admin-accent)' },
               ].map(s => (
                 <a
                   key={s.label}
@@ -112,7 +138,7 @@ export default function ContactSection() {
                     color: 'var(--admin-text-secondary)', fontSize: 17, textDecoration: 'none',
                     transition: 'border-color 0.2s, color 0.2s',
                   }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--admin-accent)'; (e.currentTarget as HTMLElement).style.color = 'var(--admin-accent)'; }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = s.hoverColor; (e.currentTarget as HTMLElement).style.color = s.hoverColor; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--admin-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--admin-text-secondary)'; }}
                 >
                   <i className={`bi ${s.icon}`} />
