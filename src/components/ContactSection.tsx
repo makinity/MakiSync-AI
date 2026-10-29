@@ -74,9 +74,9 @@ export default function ContactSection() {
                   label: 'WhatsApp Direct',
                   value: '+63 961 044 5390',
                   href: 'https://wa.me/639610445390',
-                  color: '#25D366',
-                  bg: 'rgba(37, 211, 102, 0.1)',
-                  border: 'rgba(37, 211, 102, 0.25)',
+                  color: 'var(--admin-accent)',
+                  bg: 'rgba(59,130,246,0.08)',
+                  border: 'rgba(59,130,246,0.2)',
                 },
                 {
                   icon: 'bi-envelope-fill',
@@ -124,7 +124,7 @@ export default function ContactSection() {
             {/* Social links */}
             <div style={{ display: 'flex', gap: 10 }}>
               {[
-                { icon: 'bi-whatsapp', href: 'https://wa.me/639610445390', label: 'WhatsApp', hoverColor: '#25D366' },
+                { icon: 'bi-whatsapp', href: 'https://wa.me/639610445390', label: 'WhatsApp', hoverColor: 'var(--admin-accent)' },
                 { icon: 'bi-github', href: 'https://github.com/makinity', label: 'GitHub', hoverColor: 'var(--admin-accent)' },
                 { icon: 'bi-linkedin', href: 'https://www.linkedin.com/in/mark-vencent-juntilla-366328358/', label: 'LinkedIn', hoverColor: 'var(--admin-accent)' },
               ].map(s => (
