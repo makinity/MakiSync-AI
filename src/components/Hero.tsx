@@ -186,12 +186,17 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
           el.style.transform   = 'translateX(-50%) translateY(0)';
         }}
       >
-        <i className="bi bi-play-circle-fill" style={{ color: 'var(--admin-accent)', fontSize: '1.05rem' }} />
-        Watch 2026 Director Cut
+        <i className="bi bi-play-circle-fill" style={{ color: 'var(--admin-accent)', fontSize: '1.05rem', flexShrink: 0 }} />
+        <span className="hero-watch-label-desktop">Watch 2026 Director Cut</span>
+        <span className="hero-watch-label-mobile">Watch Showreel</span>
       </motion.button>
 
       {/* ── Keyframes ─────────────────────────────────────────────────────────── */}
       <style>{`
+        .hero-watch-label-mobile {
+          display: none;
+        }
+
         @keyframes marqueeSlide {
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }
@@ -214,6 +219,12 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
         }
 
         @media (max-width: 768px) {
+          .hero-watch-label-desktop {
+            display: none !important;
+          }
+          .hero-watch-label-mobile {
+            display: inline !important;
+          }
           .hero-avail-info {
             top: 76px !important;
             bottom: auto !important;
@@ -246,10 +257,9 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
             white-space: nowrap !important;
           }
           .hero-watch-btn {
-            bottom: 1.8rem !important;
-            padding: 8px 18px !important;
+            bottom: 1.35rem !important;
+            padding: 8px 16px !important;
             font-size: 0.74rem !important;
-            max-width: calc(100vw - 110px) !important;
           }
         }
       `}</style>

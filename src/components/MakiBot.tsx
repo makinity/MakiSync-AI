@@ -186,6 +186,7 @@ export default function MakiBot() {
     <>
       {/* ── Floating Round Button ────────────────────────────────────────── */}
       <motion.button
+        className="makibot-float-trigger"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Toggle MakiBot Chat"
         initial={{ scale: 0, opacity: 0 }}
@@ -253,6 +254,7 @@ export default function MakiBot() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            className="makibot-chat-window"
             initial={{ opacity: 0, y: 24, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.95 }}
@@ -573,6 +575,22 @@ export default function MakiBot() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .makibot-float-trigger {
+            bottom: 1.2rem !important;
+            right: 1rem !important;
+            width: 48px !important;
+            height: 48px !important;
+          }
+          .makibot-chat-window {
+            right: 1rem !important;
+            bottom: 4.8rem !important;
+            width: calc(100vw - 2rem) !important;
+          }
+        }
+      `}</style>
     </>
   );
 }
