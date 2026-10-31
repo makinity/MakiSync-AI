@@ -132,55 +132,20 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
         </div>
       </motion.div>
 
-      {/* ── Center: Scroll indicator ─────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.6 }}
-        style={{
-          position:       'absolute',
-          bottom:         '2.5rem',
-          left:           '50%',
-          transform:      'translateX(-50%)',
-          zIndex:          5,
-          display:        'flex',
-          flexDirection:  'column',
-          alignItems:     'center',
-          gap:             6,
-          color:          'var(--admin-text-muted)',
-        }}
-      >
-        <span style={{ fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
-          Scroll
-        </span>
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
-        >
-          <svg width="18" height="28" viewBox="0 0 18 28" fill="none">
-            <rect x="1" y="1" width="16" height="26" rx="8" stroke="currentColor" strokeWidth="1.5" />
-            <motion.circle
-              cx="9" cy="8" r="2.5" fill="currentColor"
-              animate={{ cy: [8, 16, 8] }}
-              transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
-            />
-          </svg>
-        </motion.div>
-      </motion.div>
-
-      {/* ── Watch Showreel button — bottom right ─────────────────────────────── */}
+      {/* ── Watch Showreel / Video Intro button — Centered at bottom ───────────── */}
       <motion.button
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ delay: 0.65, duration: 0.5 }}
         onClick={onOpenShowreel}
         className="hero-watch-btn"
         style={{
           position:   'absolute',
-          bottom:     '2.5rem',
-          right:      '2.5rem',
+          bottom:     '2.2rem',
+          left:       '50%',
+          transform:  'translateX(-50%)',
           zIndex:      5,
-          padding:    '9px 22px',
+          padding:    '10px 24px',
           borderRadius: 99,
           background: 'var(--admin-card)',
           border:     '1px solid var(--admin-border-strong)',
@@ -192,25 +157,25 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
           display:    'inline-flex',
           alignItems: 'center',
           gap:         8,
-          backdropFilter: 'blur(12px)',
-          boxShadow:  '0 4px 20px rgba(0,0,0,0.08)',
-          transition: 'all 0.2s ease',
+          backdropFilter: 'blur(16px)',
+          boxShadow:  '0 4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(59,130,246,0.1)',
+          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
           whiteSpace: 'nowrap',
         }}
         onMouseEnter={e => {
           const el = e.currentTarget as HTMLElement;
           el.style.borderColor = 'var(--admin-accent)';
-          el.style.boxShadow   = '0 4px 24px rgba(59,130,246,0.18)';
-          el.style.transform   = 'translateY(-2px)';
+          el.style.boxShadow   = '0 8px 30px rgba(59,130,246,0.25)';
+          el.style.transform   = 'translateX(-50%) translateY(-3px)';
         }}
         onMouseLeave={e => {
           const el = e.currentTarget as HTMLElement;
           el.style.borderColor = 'var(--admin-border-strong)';
-          el.style.boxShadow   = '0 4px 20px rgba(0,0,0,0.08)';
-          el.style.transform   = 'translateY(0)';
+          el.style.boxShadow   = '0 4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(59,130,246,0.1)';
+          el.style.transform   = 'translateX(-50%) translateY(0)';
         }}
       >
-        <i className="bi bi-play-circle-fill" style={{ color: 'var(--admin-accent)', fontSize: '1rem' }} />
+        <i className="bi bi-play-circle-fill" style={{ color: 'var(--admin-accent)', fontSize: '1.05rem' }} />
         Watch 2026 Director Cut
       </motion.button>
 
@@ -239,10 +204,9 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
 
         @media (max-width: 640px) {
           .hero-watch-btn {
-            bottom: 4.8rem !important;
-            left: 50% !important;
-            right: auto !important;
-            transform: translateX(-50%) !important;
+            bottom: 2rem !important;
+            padding: 8px 18px !important;
+            font-size: 0.74rem !important;
           }
         }
       `}</style>
