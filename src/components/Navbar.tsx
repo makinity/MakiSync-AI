@@ -7,6 +7,7 @@ export default function Navbar() {
   const [scrolled, setScrolled]           = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode]           = useState(true);
+  const [hiddenByWork, setHiddenByWork]   = useState(false);
 
   // Sync initial state from whatever the layout script already set
   useEffect(() => {
@@ -23,10 +24,37 @@ export default function Navbar() {
   };
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 30);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 30);
+      const workEl = document.getElementById('selected-work');
+      const staticBar = document.getElementById('selected-work-static-bar');
+      if (workEl && staticBar) {
+        const sRect = staticBar.getBoundingClientRect();
+        const wRect = workEl.getBoundingClientRect();
+        setHiddenByWork(sRect.bottom <= 50 && wRect.bottom >= 220);
+      }
+    };
+
+    const handleWorkNav = (e: any) => {
+      setHiddenByWork(Boolean(e.detail));
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll, { passive: true });
+    window.addEventListener('work-nav-active', handleWorkNav);
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+      window.removeEventListener('work-nav-active', handleWorkNav);
+    };
   }, []);
+
+  // Close mobile drawer when work section takes over top bar
+  useEffect(() => {
+    if (hiddenByWork) setMobileMenuOpen(false);
+  }, [hiddenByWork]);
 
   const links = [
     { label: 'WORK',     href: '#selected-work' },
@@ -49,8 +77,10 @@ export default function Navbar() {
           display:    'flex',
           justifyContent: 'center',
           padding:    scrolled ? '10px 16px' : '18px 16px',
-          transition: 'padding 0.3s ease',
-          pointerEvents: 'none',
+          transition: 'padding 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
+          pointerEvents: hiddenByWork ? 'none' : undefined,
+          transform:  hiddenByWork ? 'translateY(-120%)' : 'translateY(0)',
+          opacity:    hiddenByWork ? 0 : 1,
         }}
       >
         {/* The pill container */}
