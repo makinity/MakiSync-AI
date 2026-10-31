@@ -99,11 +99,12 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
         />
       </motion.div>
 
-      {/* ── Bottom-left: AVAILABLE FOR WORK ─────────────────────────────────── */}
+      {/* ── Bottom-left (Desktop) / Top-Center (Mobile): AVAILABLE FOR WORK ─ */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.6 }}
+        className="hero-avail-info"
         style={{
           position: 'absolute',
           bottom:   '2.5rem',
@@ -111,23 +112,33 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
           zIndex:    5,
         }}
       >
-        <div style={{
-          fontSize:      '0.62rem',
-          fontWeight:    800,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color:         'var(--admin-accent)',
-          marginBottom:  '0.35rem',
-        }}>
+        <div
+          className="hero-avail-badge"
+          style={{
+            fontSize:      '0.62rem',
+            fontWeight:    800,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color:         'var(--admin-accent)',
+            marginBottom:  '0.35rem',
+            display:       'inline-flex',
+            alignItems:    'center',
+            gap:           6,
+          }}
+        >
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
           Available for Work
         </div>
-        <div style={{
-          fontSize:   '0.88rem',
-          fontWeight: 600,
-          color:      'var(--admin-text-primary)',
-          lineHeight:  1.45,
-        }}>
-          AI ADS UGC Creator&nbsp;·<br />
+        <div
+          className="hero-avail-title"
+          style={{
+            fontSize:   '0.88rem',
+            fontWeight: 600,
+            color:      'var(--admin-text-primary)',
+            lineHeight:  1.45,
+          }}
+        >
+          AI ADS UGC Creator&nbsp;·<br className="hero-avail-br" />
           Commercial Video Director
         </div>
       </motion.div>
@@ -202,11 +213,43 @@ export default function Hero({ onOpenShowreel }: HeroProps) {
           mix-blend-mode: normal;
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
+          .hero-avail-info {
+            top: 76px !important;
+            bottom: auto !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            text-align: center !important;
+            width: max-content !important;
+            max-width: 90vw !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            padding: 5px 14px !important;
+            border-radius: 999px !important;
+            background: var(--nav-bg) !important;
+            backdrop-filter: blur(14px) !important;
+            -webkit-backdrop-filter: blur(14px) !important;
+            border: 1px solid var(--stroke-color) !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06) !important;
+          }
+          .hero-avail-br {
+            display: none !important;
+          }
+          .hero-avail-badge {
+            margin-bottom: 2px !important;
+            font-size: 0.58rem !important;
+          }
+          .hero-avail-title {
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            white-space: nowrap !important;
+          }
           .hero-watch-btn {
-            bottom: 2rem !important;
+            bottom: 1.8rem !important;
             padding: 8px 18px !important;
             font-size: 0.74rem !important;
+            max-width: calc(100vw - 110px) !important;
           }
         }
       `}</style>
