@@ -424,9 +424,10 @@ export default function AdminProjectsPage() {
                       justifyContent: 'space-between',
                       gap: 8,
                     }}>
-                      <Link
-                        href={`/projects/${p.slug}`}
+                      <a
+                        href={p.video_url || p.hero_video_url || '/#selected-work'}
                         target="_blank"
+                        rel="noreferrer"
                         style={{
                           fontSize: '0.72rem',
                           fontWeight: 700,
@@ -438,7 +439,7 @@ export default function AdminProjectsPage() {
                         }}
                       >
                         <i className="bi bi-box-arrow-up-right" style={{ fontSize: '0.65rem' }} /> Preview
-                      </Link>
+                      </a>
 
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button

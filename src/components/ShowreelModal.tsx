@@ -395,25 +395,15 @@ export default function ShowreelModal({ isOpen, onClose, videoUrl, title, format
                 borderTop: '1px solid var(--admin-border)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
                 gap: 8,
-                flexWrap: 'wrap',
                 fontSize: '0.72rem',
                 flexShrink: 0,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--admin-text-primary)', fontWeight: 600, minWidth: 0, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--admin-text-primary)', fontWeight: 600, minWidth: 0 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399', flexShrink: 0 }} />
                 <span style={{ wordBreak: 'break-word' }}>AI Creative Direction: Mark Vencent Juntilla</span>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ padding: '2px 7px', borderRadius: 6, background: 'var(--admin-card)', color: 'var(--admin-accent)', fontSize: '0.65rem', fontWeight: 700, border: '1px solid var(--admin-border)', whiteSpace: 'nowrap' }}>
-                  Google Flow AI
-                </span>
-                <span style={{ padding: '2px 7px', borderRadius: 6, background: 'var(--admin-card)', color: 'var(--admin-text-muted)', fontSize: '0.65rem', fontWeight: 600, border: '1px solid var(--admin-border)', whiteSpace: 'nowrap' }}>
-                  Premiere Pro
-                </span>
               </div>
             </div>
           </motion.div>

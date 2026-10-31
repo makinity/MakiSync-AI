@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
 import { getVideoSource } from '@/lib/videoUtils';
 import ShowreelModal from './ShowreelModal';
 import { Video, Category } from '@/types/database';
@@ -528,18 +527,17 @@ export default function SelectedWork({ projects, categories: initialCategories }
                       )}
                     </div>
 
-                    <div style={{
-                      paddingTop: 10,
-                      borderTop: '1px solid var(--admin-border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 8,
-                      flexWrap: 'wrap',
-                    }}>
-                      {/* Tools tags */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        {(project.tools_used || []).slice(0, 2).map((t, idx) => (
+                    {/* Tools tags if present */}
+                    {(project.tools_used && project.tools_used.length > 0) && (
+                      <div style={{
+                        paddingTop: 10,
+                        borderTop: '1px solid var(--admin-border)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        flexWrap: 'wrap',
+                      }}>
+                        {project.tools_used.slice(0, 3).map((t, idx) => (
                           <span key={idx} style={{
                             fontSize: '0.65rem', padding: '2px 8px', borderRadius: 6,
                             background: 'var(--admin-bg-secondary)',
@@ -550,34 +548,13 @@ export default function SelectedWork({ projects, categories: initialCategories }
                             {t}
                           </span>
                         ))}
-                        {(project.tools_used || []).length > 2 && (
+                        {project.tools_used.length > 3 && (
                           <span style={{ fontSize: '0.65rem', color: 'var(--admin-text-muted)', whiteSpace: 'nowrap' }}>
-                            +{(project.tools_used || []).length - 2}
+                            +{project.tools_used.length - 3}
                           </span>
                         )}
                       </div>
-
-                      {/* View Video link */}
-                      <Link
-                        href={`/projects/${project.slug}`}
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          color: 'var(--admin-accent)',
-                          textDecoration: 'none',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          transition: 'color 0.2s',
-                          whiteSpace: 'nowrap',
-                        }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#ffffff'; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--admin-accent)'; }}
-                      >
-                        View Video <i className="bi bi-arrow-up-right" style={{ fontSize: '0.68rem' }} />
-                      </Link>
-                    </div>
+                    )}
                   </div>
                 </div>
               );
