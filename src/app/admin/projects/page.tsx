@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AppLayout from '@/layouts/AppLayout';
 import ConfirmModal from '@/components/ConfirmModal';
+import ShowreelModal from '@/components/ShowreelModal';
 import { Project, Category } from '@/types/database';
 import MediaThumbnail from '@/components/MediaThumbnail';
 import { getAllProjects, deleteProject, getCategories } from '@/lib/supabase';
@@ -17,6 +18,9 @@ export default function AdminProjectsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+
+  // Preview Modal state
+  const [previewProject, setPreviewProject] = useState<Project | null>(null);
 
   // Delete Confirm Modal state
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
@@ -304,7 +308,11 @@ export default function AdminProjectsPage() {
                   }}
                 >
                   {/* Card Thumbnail Header */}
-                  <div style={{ position: 'relative', aspectRatio: p.format === '16:9' ? '16/9' : '16/9', background: '#050810', overflow: 'hidden' }}>
+                  <div
+                    onClick={() => setPreviewProject(p)}
+                    style={{ position: 'relative', aspectRatio: '16/9', background: '#050810', overflow: 'hidden', cursor: 'pointer' }}
+                    title="Click to preview video"
+                  >
                     <MediaThumbnail
                       src={p.thumbnail_url}
                       videoFallbackUrl={p.video_url || p.hero_video_url}
@@ -424,22 +432,28 @@ export default function AdminProjectsPage() {
                       justifyContent: 'space-between',
                       gap: 8,
                     }}>
-                      <a
-                        href={p.video_url || p.hero_video_url || '/#selected-work'}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => setPreviewProject(p)}
                         style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: '0.2rem 0.4rem',
+                          borderRadius: 6,
                           fontSize: '0.72rem',
                           fontWeight: 700,
                           color: 'var(--admin-accent)',
-                          textDecoration: 'none',
+                          cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: 4
+                          gap: 4,
+                          transition: 'background 0.15s ease',
                         }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(59,130,246,0.1)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                       >
-                        <i className="bi bi-box-arrow-up-right" style={{ fontSize: '0.65rem' }} /> Preview
-                      </a>
+                        <i className="bi bi-play-circle-fill" style={{ fontSize: '0.78rem' }} /> Preview
+                      </button>
 
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button
@@ -602,6 +616,25 @@ export default function AdminProjectsPage() {
                         <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                             <button
+                              type="button"
+                              onClick={() => setPreviewProject(p)}
+                              style={{
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: 8,
+                                border: '1px solid var(--admin-border-strong)',
+                                background: 'transparent',
+                                color: 'var(--admin-accent)',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                              }}
+                            >
+                              <i className="bi bi-play-circle-fill" style={{ fontSize: '0.75rem' }} /> Preview
+                            </button>
+                            <button
                               onClick={() => handleEdit(p)}
                               style={{
                                 padding: '0.35rem 0.75rem',
@@ -659,6 +692,17 @@ export default function AdminProjectsPage() {
           loading={deleting}
           danger={true}
           confirmLabel="Delete Project"
+        />
+      )}
+
+      {/* Video Modal Preview */}
+      {previewProject && (
+        <ShowreelModal
+          isOpen={!!previewProject}
+          onClose={() => setPreviewProject(null)}
+          videoUrl={previewProject.video_url || previewProject.hero_video_url || ''}
+          title={previewProject.title}
+          format={previewProject.format}
         />
       )}
     </AppLayout>
