@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -119,7 +119,7 @@ export default function AdminLoginPage() {
         </div>
 
         <div style={{ position: 'relative', zIndex: 2, fontSize: '0.75rem', color: '#6f83a6' }}>
-          © 2026 MakiSync. Mark Vencent Juntilla.
+          &copy; 2026 MakiSync. Mark Vencent Juntilla.
         </div>
       </div>
 
@@ -127,17 +127,21 @@ export default function AdminLoginPage() {
       <div className="login-right">
         <Link
           href="/"
+          title="Portfolio Home"
+          aria-label="Portfolio Home"
           style={{
             position: 'absolute', top: '1.5rem', left: '1.5rem',
-            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-            padding: '0.4rem 0.85rem', borderRadius: 8,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 38, height: 38, borderRadius: 10,
             border: '1px solid var(--admin-border)',
             background: 'var(--admin-card)',
             color: 'var(--admin-text-secondary)',
-            fontSize: '0.8rem', fontWeight: 600, textDecoration: 'none',
+            fontSize: '1.05rem', textDecoration: 'none',
+            transition: 'all 0.15s ease',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
           }}
         >
-          ← Portfolio Home
+          <i className="bi bi-house-door-fill" />
         </Link>
 
         <div className="login-card">

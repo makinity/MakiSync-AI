@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -296,7 +296,7 @@ export default function LoginPage() {
 
           {/* Copyright - absolute bottom */}
           <div style={{ position: 'absolute', bottom: '2rem', left: '2.5rem', zIndex: 3, fontSize: '0.72rem', color: 'rgba(244,248,255,0.35)' }}>
-            © 2026 MakiSync. Mark Vencent Juntilla.
+            &copy; 2026 MakiSync. Mark Vencent Juntilla.
           </div>
         </div>
 
@@ -308,30 +308,35 @@ export default function LoginPage() {
             pointerEvents: 'none', zIndex: 0,
           }} />
 
-          {/* Portfolio Home button */}
+          {/* Home Icon button */}
           <a
             href="/"
+            title="Portfolio Home"
+            aria-label="Portfolio Home"
             style={{
               position: 'absolute', top: '1.25rem', left: '1.25rem', zIndex: 2,
-              display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-              padding: '0.4rem 0.85rem', borderRadius: 8,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 38, height: 38, borderRadius: 10,
               border: '1px solid var(--admin-border)',
               background: 'var(--admin-card)',
               backdropFilter: 'blur(8px)',
               color: 'var(--admin-text-secondary)',
-              fontSize: '0.8rem', fontWeight: 600, textDecoration: 'none',
-              transition: 'all 0.15s',
+              fontSize: '1.05rem', textDecoration: 'none',
+              transition: 'all 0.15s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLElement).style.color = 'var(--admin-accent)';
               (e.currentTarget as HTMLElement).style.borderColor = 'var(--admin-accent)';
+              (e.currentTarget as HTMLElement).style.transform = 'scale(1.05)';
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLElement).style.color = 'var(--admin-text-secondary)';
               (e.currentTarget as HTMLElement).style.borderColor = 'var(--admin-border)';
+              (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
             }}
           >
-            <i className="bi bi-arrow-left" style={{ fontSize: '0.75rem' }} /> Portfolio Home
+            <i className="bi bi-house-door-fill" />
           </a>
 
           {/* Sign-in card */}
@@ -426,7 +431,7 @@ export default function LoginPage() {
             position: 'absolute', bottom: '1.25rem',
             fontSize: '0.72rem', color: 'var(--admin-text-muted)', zIndex: 1,
           }}>
-            © 2026 MakiSync. Mark Vencent Juntilla.
+            &copy; 2026 MakiSync. Mark Vencent Juntilla.
           </div>
         </div>
       </div>
